@@ -6,13 +6,12 @@ export function NavBar() {
   if (!profile) return null;
 
   const isAdmin = profile.role === 'admin';
-  const isHourly = profile.pay_type === 'hourly';
   const linkClass = ({ isActive }: { isActive: boolean }) => (isActive ? 'active' : undefined);
 
   return (
     <nav className="appnav">
       <NavLink to="/" end className={linkClass}>
-        {isHourly ? 'Clock' : 'Home'}
+        Clock
       </NavLink>
       <NavLink to="/timesheet" className={linkClass}>
         Timesheet

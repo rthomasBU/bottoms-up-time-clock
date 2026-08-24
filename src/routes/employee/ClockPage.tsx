@@ -37,8 +37,6 @@ export function ClockPage() {
     setBusy(false);
   }
 
-  const isSalaried = profile?.pay_type === 'salaried';
-
   return (
     <div className="clock-page">
       <h1>
@@ -46,9 +44,7 @@ export function ClockPage() {
       </h1>
       <p className="sub">Welcome, {profile?.full_name}.</p>
 
-      {isSalaried ? (
-        <p>You're on salary, so there's no clock to punch. Head to the PTO tab to request time off.</p>
-      ) : loading ? (
+      {loading ? (
         <p>Loading status...</p>
       ) : (
         <>

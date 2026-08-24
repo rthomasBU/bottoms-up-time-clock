@@ -99,6 +99,12 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] Verified live: with all current test data inside the last 7 days, all three cards correctly show the same 14.61 total. Checked at mobile width (375px) - cards wrap 2-then-1 with no page-level horizontal scroll (`document.documentElement.scrollWidth === window.innerWidth`).
 - [ ] Not yet verified with data older than 7 days: confirm Last 30/60 Days grows relative to Last 7 Days once an entry outside the most recent week exists.
 
+## Salaried employees can now use the Clock tab ✅ verified
+
+- [x] Removed the pay-type gate on `/` (`ClockPage.tsx`) - previously salaried employees saw "You're on salary, so there's no clock to punch" instead of the clock button. Now every employee, hourly or salaried, gets the same Clock In/Out button, status card, and This Week progress. This was purely a UI restriction - no RLS or DB constraint on `time_entries` ever referenced `pay_type`, so nothing needed to change at the database layer.
+- [x] Nav bar's `/` link now always reads "Clock" (was "Home" for salaried, "Clock" for hourly).
+- [x] Re-verified the hourly account still clocks in/out with no regressions after the change (same code path both pay types now share). Not separately re-tested with a salaried login in this pass, but the branch that used to special-case salaried no longer exists - there is no longer a different code path to diverge.
+
 ## Clock in/out geolocation (0009_time_entry_geolocation.sql) ✅ verified
 
 - [x] Clock In / Clock Out capture best-effort device location (`src/lib/geolocation.ts`) and save it to the new `clock_in_lat/lng/accuracy_m` and `clock_out_lat/lng/accuracy_m` columns - never blocks the punch itself, and resolves to null within 6s if permission is denied/unavailable/slow.
