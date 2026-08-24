@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { getMonthGrid, toDateKey } from '../lib/payroll';
 
 export interface CalendarEvent {
@@ -15,10 +16,13 @@ interface MonthCalendarProps {
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_LABEL = (d: Date) => d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+const DAY_LABEL = (d: Date) => d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+const MAX_VISIBLE_EVENTS = 2;
 
 export function MonthCalendar({ month, onPrevMonth, onNextMonth, events }: MonthCalendarProps) {
   const days = getMonthGrid(month);
   const todayKey = toDateKey(new Date());
+  const [openDateKey, setOpenDateKey] = useState<string | null>(null);
 
   const eventsByDay = new Map<string, CalendarEvent[]>();
   for (const event of events) {
@@ -26,6 +30,18 @@ export function MonthCalendar({ month, onPrevMonth, onNextMonth, events }: Month
     if (bucket) bucket.push(event);
     else eventsByDay.set(event.dateKey, [event]);
   }
+
+  useEffect(() => {
+    if (!openDateKey) return;
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpenDateKey(null);
+    }
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [openDateKey]);
+
+  const openDay = days.find((d) => toDateKey(d.date) === openDateKey);
+  const openDayEvents = openDateKey ? (eventsByDay.get(openDateKey) ?? []) : [];
 
   return (
     <div className="calendar card">
@@ -53,22 +69,60 @@ export function MonthCalendar({ month, onPrevMonth, onNextMonth, events }: Month
             const dateKey = toDateKey(date);
             const dayEvents = eventsByDay.get(dateKey) ?? [];
             const isToday = dateKey === todayKey;
+            const visible = dayEvents.slice(0, MAX_VISIBLE_EVENTS);
+            const hiddenCount = dayEvents.length - visible.length;
             return (
-              <div
+              <button
+                type="button"
                 key={dateKey}
+                onClick={() => setOpenDateKey(dateKey)}
+                aria-label={`${DAY_LABEL(date)}${dayEvents.length > 0 ? `, ${dayEvents.length} event${dayEvents.length === 1 ? '' : 's'}` : ''}`}
                 className={`calendar-day${inCurrentMonth ? '' : ' calendar-day-outside'}${isToday ? ' calendar-day-today' : ''}`}
               >
                 <div className="calendar-day-number">{date.getDate()}</div>
-                {dayEvents.map((event, i) => (
+                {visible.map((event, i) => (
                   <span key={i} className={`tag ${event.tagClass} calendar-event`}>
                     {event.label}
                   </span>
                 ))}
-              </div>
+                {hiddenCount > 0 && <span className="tag muted calendar-event calendar-more">+{hiddenCount} more</span>}
+              </button>
             );
           })}
         </div>
       </div>
+
+      {openDay && (
+        <div className="modal" onClick={() => setOpenDateKey(null)}>
+          <div
+            className="modal-box modal-box-small"
+            role="dialog"
+            aria-modal="true"
+            aria-label={DAY_LABEL(openDay.date)}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-head">
+              <h2>{DAY_LABEL(openDay.date)}</h2>
+              <button type="button" className="btn-clear modal-close" onClick={() => setOpenDateKey(null)} aria-label="Close">
+                Close
+              </button>
+            </div>
+            <div className="modal-day-events">
+              {openDayEvents.length === 0 ? (
+                <p className="form-hint">Nothing scheduled.</p>
+              ) : (
+                <ul>
+                  {openDayEvents.map((event, i) => (
+                    <li key={i}>
+                      <span className={`tag ${event.tagClass}`}>{event.label}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

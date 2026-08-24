@@ -62,7 +62,16 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] Admin can add a holiday on `/admin/holidays`; it appears on the calendar and in the holidays list.
 - [x] Salaried employees have a working "Home" nav link to `/` (previously missing entirely).
 - [x] Fixed: the calendar's `min-width: 490px` grid was bleeding out to cause real page-level horizontal scroll at 390px width, not just its own internal scroll - fixed with `width: 100%` on `.calendar`/`.calendar-scroll` so the `overflow-x: auto` wrapper has a definite width to actually clip against. Re-verified clean after the fix (`document.documentElement.scrollWidth === window.innerWidth`, calendar's own scroll still works).
-- [ ] Not yet tested with a second employee account: an approved PTO request from employee A shows on employee B's calendar with A's name; a pending/denied request from A does not appear to B at all.
+- [x] Confirmed with real second/third employee accounts in production: approved PTO from other employees (e.g. "PTO - Test Employee", "PTO - Brian Pitre") shows correctly on the shared calendar with their names.
+
+## Calendar moved to its own tab; week progress + expandable day added ✅ verified
+
+- [x] Calendar moved off the home page to its own `/calendar` route and nav tab; home page (`/`) now shows a "This Week" hours-vs-40hr-target progress card (hourly employees only) instead.
+- [x] Clicking any calendar day opens a modal listing every event for that day in full, even ones the cell itself doesn't have room to show.
+- [x] Day cells cap at 2 visible event tags with a "+N more" indicator when there are more; the modal always shows the complete list (tested a day with 3 events).
+- [x] Modal closes via its Close button, clicking the backdrop, or Escape.
+- [x] Day cells have an accessible name (e.g. "Tuesday, September 1, 2026, 3 events") - previously the 42 day cells had no accessible label at all.
+- [x] No horizontal page scroll and the modal fits comfortably at 390x844.
 
 ## Phase 4 - PTO tracking ✅ verified
 

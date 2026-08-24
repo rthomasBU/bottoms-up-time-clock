@@ -811,15 +811,31 @@ progress {
   color: var(--gray);
 }
 .calendar-day {
+  /* reset native <button> chrome - this is a day cell, not a branded button */
+  border: none;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+
   background: var(--white);
   min-height: 74px;
   padding: 6px;
   display: flex;
   flex-direction: column;
   gap: 3px;
+  transition: background 0.12s;
+}
+.calendar-day:hover {
+  background: var(--tint);
+  outline: 1px solid var(--orange);
+  outline-offset: -1px;
 }
 .calendar-day-outside {
   background: var(--tint);
+}
+.calendar-day-outside:hover {
+  background: var(--stripe);
 }
 .calendar-day-outside .calendar-day-number {
   color: var(--gray);
@@ -838,6 +854,64 @@ progress {
   padding: 2px 6px;
   white-space: normal;
   width: fit-content;
+}
+.calendar-more {
+  font-style: italic;
+}
+
+/* Modal - per the brand kit's small-dialog sizing (width:min(780px,96vw);
+   height:auto; max-height:94vh; overflow:auto) rather than the full-size
+   variant, since this is a single day's event list, not a big workspace. */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-box {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+.modal-box-small {
+  width: min(420px, 96vw);
+  height: auto;
+  max-height: 94vh;
+  overflow: auto;
+}
+.modal-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.modal-head h2 {
+  margin: 0;
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  font-size: 16px;
+}
+.modal-close {
+  margin-left: auto;
+}
+.modal-day-events {
+  padding: 14px 18px;
+}
+.modal-day-events ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 @media print {
