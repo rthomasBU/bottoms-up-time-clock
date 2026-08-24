@@ -73,6 +73,11 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] Day cells have an accessible name (e.g. "Tuesday, September 1, 2026, 3 events") - previously the 42 day cells had no accessible label at all.
 - [x] No horizontal page scroll and the modal fits comfortably at 390x844.
 
+## Fixed: "PTO - Unknown" on the shared calendar (0007_employee_names_view.sql) ✅ verified
+
+- [x] Root cause: `pto_requests` embedded `profiles(full_name)` directly, but `profiles`' own RLS only lets a non-admin see their own row - every other employee's name silently resolved to null. Fixed with a narrow `employee_names` view (id + full_name only, nothing sensitive) that `useTeamPto` now queries separately and merges client-side instead of relying on the embed.
+- [x] Re-verified on the calendar: all three test accounts' names ("Ryan Thomas", "Test Employee", "Brian Pitre") resolve correctly, including inside the day-detail modal, with no console errors.
+
 ## Phase 4 - PTO tracking ✅ verified
 
 - [x] Submitting a request shows it as `pending` in "Your requests" with correct dates (watch for timezone bugs on `date`-only columns - fixed once, worth re-checking after any date-formatting change).

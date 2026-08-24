@@ -135,7 +135,15 @@ export interface Database {
         Relationships: [];
       };
     };
-    Views: Record<string, never>;
+    Views: {
+      employee_names: {
+        Row: {
+          id: string;
+          full_name: string;
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
       review_pto_request: {
         Args: {
