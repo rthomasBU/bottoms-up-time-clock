@@ -61,3 +61,14 @@ export function fromDatetimeLocalValue(value: string): string {
 export function daysAgo(days: number, now: Date = new Date()): Date {
   return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 }
+
+/** Monday 00:00:00 through Sunday 23:59:59.999 of the week containing `now`,
+ *  matching the Monday-start pay period convention used elsewhere
+ *  (see src/lib/payroll.ts). */
+export function getCurrentWeekRange(now: Date = new Date()): { start: Date; end: Date } {
+  const day = now.getDay(); // 0 = Sunday
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() + mondayOffset);
+  const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6, 23, 59, 59, 999);
+  return { start, end };
+}

@@ -1,67 +1,34 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useClockStatus } from '../../hooks/useClockStatus';
-import { useHolidays } from '../../hooks/useHolidays';
-import { useTeamPto } from '../../hooks/useTeamPto';
-import { elapsedSince, formatTime } from '../../lib/time';
-import { getMonthGrid, getPaydaysInRange, toDateKey } from '../../lib/payroll';
-import { MonthCalendar, type CalendarEvent } from '../../components/MonthCalendar';
+import { useTimesheet } from '../../hooks/useTimesheet';
+import { elapsedSince, formatTime, hoursBetween, getCurrentWeekRange } from '../../lib/time';
+
+const WEEKLY_TARGET_HOURS = 40;
 
 export function ClockPage() {
   const { profile } = useAuth();
   const { openEntry, loading, error, clockIn, clockOut } = useClockStatus(profile?.id);
+  const { entries } = useTimesheet(profile?.id);
   const [now, setNow] = useState(new Date());
   const [busy, setBusy] = useState(false);
-  const [month, setMonth] = useState(() => new Date());
 
   useEffect(() => {
-    if (!openEntry) return;
     const id = setInterval(() => setNow(new Date()), 1000 * 30);
     return () => clearInterval(id);
-  }, [openEntry]);
+  }, []);
 
-  const grid = useMemo(() => getMonthGrid(month), [month]);
-  const gridStart = grid[0].date;
-  const gridEnd = grid[grid.length - 1].date;
-  const gridStartKey = toDateKey(gridStart);
-  const gridEndKey = toDateKey(gridEnd);
-
-  const { holidays } = useHolidays();
-  const { requests: teamPto } = useTeamPto(gridStartKey, gridEndKey);
-
-  const events: CalendarEvent[] = useMemo(() => {
-    const paydayEvents: CalendarEvent[] = getPaydaysInRange(gridStart, gridEnd).map((d) => ({
-      dateKey: toDateKey(d),
-      label: 'Payday',
-      tagClass: 'ok',
-    }));
-
-    const holidayEvents: CalendarEvent[] = holidays
-      .filter((h) => h.holiday_date >= gridStartKey && h.holiday_date <= gridEndKey)
-      .map((h) => ({ dateKey: h.holiday_date, label: h.name, tagClass: 'muted' }));
-
-    const ptoEvents: CalendarEvent[] = [];
-    for (const r of teamPto) {
-      const name = r.profiles?.full_name ?? 'Unknown';
-      const label = `${r.pto_type === 'pto' ? 'PTO' : 'Sick'} - ${name}`;
-      let d = new Date(`${r.start_date}T00:00:00`);
-      const end = new Date(`${r.end_date}T00:00:00`);
-      while (d <= end) {
-        const key = toDateKey(d);
-        if (key >= gridStartKey && key <= gridEndKey) ptoEvents.push({ dateKey: key, label, tagClass: 'hot' });
-        d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
-      }
+  const weekHours = useMemo(() => {
+    const { start, end } = getCurrentWeekRange(now);
+    let total = 0;
+    for (const e of entries) {
+      const entryClockIn = new Date(e.clock_in);
+      if (entryClockIn < start || entryClockIn > end) continue;
+      if (e.clock_out) total += hoursBetween(e.clock_in, e.clock_out);
+      else total += (now.getTime() - entryClockIn.getTime()) / 1000 / 60 / 60;
     }
-
-    return [...paydayEvents, ...holidayEvents, ...ptoEvents];
-  }, [gridStart, gridEnd, gridStartKey, gridEndKey, holidays, teamPto]);
-
-  function prevMonth() {
-    setMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1));
-  }
-  function nextMonth() {
-    setMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1));
-  }
+    return total;
+  }, [entries, now]);
 
   async function handleClick() {
     setBusy(true);
@@ -104,11 +71,17 @@ export function ClockPage() {
           >
             {busy ? 'Working...' : openEntry ? 'Clock Out' : 'Clock In'}
           </button>
+
+          <div className="card kpi week-progress">
+            <div className="label">This Week</div>
+            <div className="big">
+              {weekHours.toFixed(2)} <span className="unit">/ {WEEKLY_TARGET_HOURS} hrs</span>
+            </div>
+            <progress value={Math.min(weekHours, WEEKLY_TARGET_HOURS)} max={WEEKLY_TARGET_HOURS} />
+          </div>
         </>
       )}
       {error && <p className="form-error">{error}</p>}
-
-      <MonthCalendar month={month} onPrevMonth={prevMonth} onNextMonth={nextMonth} events={events} />
     </div>
   );
 }

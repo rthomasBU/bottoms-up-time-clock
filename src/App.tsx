@@ -6,6 +6,7 @@ import { ClockPage } from './routes/employee/ClockPage';
 import { TimesheetHistoryPage } from './routes/employee/TimesheetHistoryPage';
 import { TimeEntryEditPage as EmployeeTimeEntryEditPage } from './routes/employee/TimeEntryEditPage';
 import { PtoPage } from './routes/employee/PtoPage';
+import { CalendarPage } from './routes/employee/CalendarPage';
 import { DashboardPage } from './routes/admin/DashboardPage';
 import { TimesheetsPage } from './routes/admin/TimesheetsPage';
 import { TimeEntryEditPage as AdminTimeEntryEditPage } from './routes/admin/TimeEntryEditPage';
@@ -47,6 +48,14 @@ export default function App() {
           element={
             <RoleGuard allow={['employee', 'admin']}>
               <EmployeeTimeEntryEditPage />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="/calendar"
+          element={
+            <RoleGuard allow={['employee', 'admin']}>
+              <CalendarPage />
             </RoleGuard>
           }
         />

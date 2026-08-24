@@ -683,6 +683,13 @@ progress {
 .clock-button.out:hover {
   filter: brightness(1.25);
 }
+.week-progress {
+  width: 100%;
+  max-width: 260px;
+}
+.week-progress progress {
+  margin-top: 8px;
+}
 
 /* Review / list detail rows kept for non-tabular secondary info (edit
    reason note under a table row, etc.) */

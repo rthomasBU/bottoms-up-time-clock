@@ -17,6 +17,9 @@ export function NavBar() {
       <NavLink to="/timesheet" className={linkClass}>
         Timesheet
       </NavLink>
+      <NavLink to="/calendar" className={linkClass}>
+        Calendar
+      </NavLink>
       <NavLink to="/pto" className={linkClass}>
         PTO
       </NavLink>
