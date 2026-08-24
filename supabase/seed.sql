@@ -1,0 +1,19 @@
+-- seed.sql
+-- Dev/test seed data. NOTE: this only seeds public.profiles rows tied to
+-- fixed UUIDs. It does NOT create auth.users - for local Supabase dev
+-- (`supabase start`), create matching auth users first via:
+--   supabase auth admin (dashboard) or the Studio "Add user" UI,
+-- using the same UUIDs below, OR simpler: sign up each test account through
+-- the app's login screen once auth is wired up, then update its profiles
+-- row (created automatically by the on_auth_user_created trigger) with
+-- the role/pay_type values below instead of inserting directly.
+--
+-- Kept here as a reference/manual-run script rather than an automatic
+-- `supabase db reset` seed, since it depends on auth.users rows existing.
+
+-- Example manual update after creating real auth accounts:
+-- update public.profiles set role = 'admin',    pay_type = 'hourly',   full_name = 'Alex Admin'    where email = 'alex@bottomsupbeer.com';
+-- update public.profiles set role = 'employee', pay_type = 'hourly',   full_name = 'Jamie Hourly'  where email = 'jamie@bottomsupbeer.com';
+-- update public.profiles set role = 'employee', pay_type = 'hourly',   full_name = 'Sam Hourly'    where email = 'sam@bottomsupbeer.com';
+-- update public.profiles set role = 'employee', pay_type = 'salaried', full_name = 'Riley Salaried' where email = 'riley@bottomsupbeer.com';
+-- update public.profiles set employment_status = 'inactive'            where email = 'former@bottomsupbeer.com';

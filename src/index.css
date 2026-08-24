@@ -1,0 +1,847 @@
+/* Bottoms Up house style. Class names match the brand kit's web style guide
+   exactly so this app pattern-matches with the rest of the internal tool
+   suite - see BottomsUpBrandKit/bottoms-up-style-guide.md. */
+
+:root {
+  --smoke: #f5f4f2;
+  --white: #ffffff;
+  --ink: #1a1a1a;
+  --gray: #8a8b8b;
+  --line: #e2e0dc;
+  --tint: #fbfaf9;
+  --stripe: #edebe7;
+  --orange: #faa61a;
+  --jonquil: #fec809;
+  --black: #000000;
+  --ok: #1e8449;
+  --danger: #c0392b;
+  --heading: 'Saira Semi Condensed', 'Arial Narrow', sans-serif;
+  --body: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--body);
+  background: var(--smoke);
+  color: var(--ink);
+  font-size: 14px;
+  min-height: 100vh;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* No blue anywhere, including the browser's default focus ring. Inputs get
+   their own non-blue focus treatment below (border-color: #000); this covers
+   links and buttons, which don't have an equivalent. */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+/* Desktop uses the whole screen. 1800px is a 4K stop, not a target. */
+.wrap {
+  width: 100%;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 10px clamp(16px, 2.5vw, 40px) 80px;
+}
+
+.reading {
+  max-width: 70ch;
+}
+
+/* Topbar */
+.topbar {
+  background: #000;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 20px;
+  height: 56px;
+}
+.topbar .brand-logo {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+.topbar .divider {
+  color: #444;
+}
+.topbar .app-name {
+  font-family: var(--heading);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #ccc;
+}
+.topbar .right {
+  margin-left: auto;
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 11px;
+  color: #8a8b8b;
+  text-decoration: none;
+}
+.topbar .right:hover {
+  color: var(--orange);
+}
+@media (max-width: 560px) {
+  .topbar .app-name,
+  .topbar .divider {
+    display: none;
+  }
+}
+
+/* Underline tabs */
+.appnav {
+  display: flex;
+  gap: 22px;
+  border-bottom: 1px solid var(--line);
+  margin: 16px 0 22px;
+  flex-wrap: wrap;
+  padding: 0;
+  align-items: center;
+}
+.appnav a,
+.appnav a:visited {
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray);
+  text-decoration: none;
+  padding: 9px 2px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  background: none;
+  transition:
+    color 0.12s,
+    border-color 0.12s;
+}
+.appnav a:hover {
+  color: var(--ink);
+}
+.appnav a.active,
+.appnav a.active:visited {
+  color: #000;
+  border-bottom-color: var(--orange);
+}
+.appnav .appnav-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 9px;
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 12px;
+  color: var(--gray);
+}
+.appnav .appnav-right button {
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 12px;
+  font-weight: 600;
+  background: none;
+  border: 0;
+  color: var(--gray);
+  padding: 0;
+}
+.appnav .appnav-right button:hover {
+  color: var(--danger);
+}
+
+/* Headings */
+h1 {
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  font-size: 30px;
+  color: var(--ink);
+  margin: 2px 0 4px;
+  line-height: 1.05;
+}
+h1 span {
+  color: var(--orange);
+}
+.sub {
+  color: var(--gray);
+  margin: 0 0 20px;
+  font-size: 14px;
+}
+h2 {
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 26px 0 14px;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 3px solid var(--orange);
+  padding-bottom: 8px;
+  margin: 26px 0 14px;
+}
+.section-head .num {
+  font-family: var(--heading);
+  font-weight: 700;
+  font-size: 13px;
+  background: var(--orange);
+  color: #000;
+  border-radius: 3px;
+  padding: 2px 8px;
+}
+.section-head h2 {
+  margin: 0;
+}
+
+/* Buttons */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 18px 0 10px;
+}
+/* Shared base applies to real <button> elements and any <a>/other element
+   wearing a .btn-* class (e.g. React Router <Link>), so the two render
+   identically. .btn is the plain secondary look (same as an unclassed
+   <button>) for a link that needs button styling but isn't the view's one
+   primary action. */
+button,
+.btn,
+.btn-build,
+.btn-alt,
+.btn-clear {
+  display: inline-block;
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  font-size: 12px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 9px 14px;
+  color: var(--ink);
+  background: var(--white);
+  text-decoration: none;
+  text-align: center;
+  transition:
+    border-color 0.12s,
+    color 0.12s,
+    background 0.12s,
+    filter 0.1s;
+}
+button:hover,
+.btn:hover,
+.btn-build:hover,
+.btn-alt:hover,
+.btn-clear:hover {
+  border-color: var(--orange);
+  color: #000;
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-build {
+  background: var(--orange);
+  color: #000;
+  border: 1px solid var(--orange);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 12px 22px;
+}
+.btn-build:hover {
+  background: var(--jonquil);
+  border-color: var(--jonquil);
+  color: #000;
+}
+
+.btn-alt {
+  background: #000;
+  color: #fff;
+  border: 1px solid #000;
+}
+.btn-alt:hover {
+  filter: brightness(1.25);
+}
+
+.btn-clear {
+  background: transparent;
+  border: 0;
+  color: var(--gray);
+}
+.btn-clear:hover {
+  color: var(--danger);
+}
+
+@media (pointer: coarse) {
+  button,
+  input,
+  select,
+  .btn,
+  .btn-build,
+  .btn-alt,
+  .btn-clear {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Cards */
+.card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px 18px;
+}
+.card + .card {
+  margin-top: 14px;
+}
+.card .label {
+  display: inline-block;
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray);
+  border-bottom: 2px solid var(--orange);
+  padding-bottom: 4px;
+  margin-bottom: 8px;
+}
+
+.cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+}
+.kpi .big {
+  font-family: var(--heading);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+.kpi .unit {
+  color: var(--gray);
+  font-size: 12px;
+}
+.kpi .big.ok {
+  color: var(--ok);
+}
+.kpi .big.danger {
+  color: var(--danger);
+}
+
+/* Forms */
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='number'],
+input[type='date'],
+input[type='datetime-local'],
+select,
+textarea {
+  font: inherit;
+  font-size: 16px;
+  background: var(--white);
+  color: var(--ink);
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-family: var(--body);
+}
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #000;
+  outline: none;
+}
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: var(--orange);
+}
+
+.formgrid {
+  display: grid;
+  grid-template-columns: minmax(180px, 2fr) minmax(110px, 1fr) minmax(120px, 1fr) auto;
+  gap: 12px 14px;
+  align-items: end;
+}
+.fcol {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.fcol label {
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+}
+.fcol input,
+.fcol select,
+.fcol textarea {
+  width: 100%;
+}
+@media (max-width: 640px) {
+  .formgrid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .formgrid .f-full {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Filter bars (admin review/export/pto - not a data-entry form, so same
+   label treatment as .fcol without the formgrid data-entry semantics) */
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 16px 0 20px;
+  align-items: end;
+}
+.filter-row .fcol {
+  min-width: 140px;
+}
+
+/* Tables: the page never scrolls sideways; the table does */
+.tablewrap {
+  overflow-x: auto;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+}
+th {
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 2px solid var(--line);
+}
+td {
+  padding: 9px 12px;
+}
+td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.row:nth-child(even) {
+  background: var(--stripe);
+}
+
+/* Selection */
+li.selected,
+tr.selected {
+  outline: 2px solid var(--orange);
+  outline-offset: -2px;
+  background: var(--tint);
+}
+tr.done td {
+  color: var(--gray);
+}
+
+/* Status tags */
+.tag {
+  display: inline-block;
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  padding: 4px 9px;
+  border-radius: 4px;
+  border: 1px solid;
+  cursor: default;
+}
+.tag.ok {
+  color: var(--ok);
+  background: #eaf4ee;
+  border-color: #c3e0ce;
+}
+.tag.muted {
+  color: var(--gray);
+  background: var(--tint);
+  border-color: var(--line);
+}
+.tag.danger {
+  color: var(--danger);
+  background: #fbedeb;
+  border-color: #efcdc7;
+}
+.tag.hot {
+  color: #000;
+  background: #fff3d6;
+  border-color: var(--orange);
+}
+
+/* Chips */
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.fact {
+  padding: 8px 12px;
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--white);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+.fact:hover {
+  border-color: var(--orange);
+  color: #000;
+}
+
+/* Status line */
+.status-line {
+  margin-top: 14px;
+  font-size: 14px;
+  min-height: 20px;
+}
+.status-line.ok {
+  color: var(--ok);
+}
+.status-line.err {
+  color: var(--danger);
+}
+.status-line.busy {
+  color: var(--orange);
+}
+progress {
+  width: 100%;
+  height: 8px;
+  accent-color: var(--orange);
+}
+.hidden {
+  display: none !important;
+}
+
+/* Login: the kit's "single-form utility" exception to full-width layout */
+.login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 56px);
+  padding: 20px;
+}
+.login-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 28px 26px;
+  width: 100%;
+  max-width: 360px;
+}
+.login-card h1 {
+  font-size: 24px;
+  margin-bottom: 18px;
+}
+.login-card label {
+  display: block;
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  margin: 14px 0 6px;
+}
+.login-card input {
+  width: 100%;
+}
+.login-card .btn-build {
+  width: 100%;
+  margin-top: 18px;
+}
+.login-card .btn-clear {
+  width: 100%;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.form-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+.form-success {
+  color: var(--ok);
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+.form-hint {
+  color: var(--gray);
+  font-size: 13px;
+  margin: 10px 0 0;
+}
+
+.centered-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 24px;
+  text-align: center;
+  gap: 8px;
+}
+
+/* Clock in/out - the app's one hero interaction, not in the component
+   catalog, built in the same visual language: orange primary action when
+   idle, black alt-emphasis once already clocked in. */
+.clock-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  text-align: center;
+  padding-top: 20px;
+}
+.clock-status {
+  min-width: 260px;
+}
+.clock-status .elapsed {
+  font-family: var(--heading);
+  font-weight: 700;
+  font-size: 26px;
+  margin: 4px 0 0;
+  text-transform: uppercase;
+}
+.clock-button {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 18px;
+  font-weight: 700;
+}
+.clock-button.in {
+  background: var(--orange);
+  border: 1px solid var(--orange);
+  color: #000;
+}
+.clock-button.in:hover {
+  background: var(--jonquil);
+  border-color: var(--jonquil);
+}
+.clock-button.out {
+  background: #000;
+  border: 1px solid #000;
+  color: #fff;
+}
+.clock-button.out:hover {
+  filter: brightness(1.25);
+}
+
+/* Review / list detail rows kept for non-tabular secondary info (edit
+   reason note under a table row, etc.) */
+.row-detail {
+  font-size: 13px;
+  color: var(--gray);
+}
+.row-reason {
+  font-size: 12px;
+  color: var(--gray);
+  font-style: italic;
+}
+
+.entry-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 420px;
+}
+.entry-form label {
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  margin-top: 12px;
+}
+.entry-form input,
+.entry-form select,
+.entry-form textarea {
+  width: 100%;
+}
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.pto-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.export-actions {
+  display: flex;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.install-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 20px;
+  background: var(--tint);
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+.install-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Month calendar - no cataloged component for this in the brand kit, built
+   in the same visual language (Saira uppercase headers, --line borders,
+   today marked with the existing outline selection pattern). */
+.calendar {
+  width: 100%;
+  max-width: 700px;
+  margin: 24px 0;
+  text-align: left;
+}
+.calendar-scroll {
+  width: 100%;
+}
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.calendar-month-label {
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  font-size: 16px;
+}
+.calendar-scroll {
+  overflow-x: auto;
+}
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(70px, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  min-width: 490px;
+}
+.calendar-weekdays {
+  border-bottom: 0;
+  margin-bottom: 1px;
+}
+.calendar-weekday {
+  background: var(--white);
+  padding: 6px 4px;
+  text-align: center;
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+}
+.calendar-day {
+  background: var(--white);
+  min-height: 74px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.calendar-day-outside {
+  background: var(--tint);
+}
+.calendar-day-outside .calendar-day-number {
+  color: var(--gray);
+}
+.calendar-day-today {
+  outline: 2px solid var(--orange);
+  outline-offset: -2px;
+}
+.calendar-day-number {
+  font-family: var(--heading);
+  font-weight: 600;
+  font-size: 13px;
+}
+.calendar-event {
+  font-size: 9px;
+  padding: 2px 6px;
+  white-space: normal;
+  width: fit-content;
+}
+
+@media print {
+  .topbar,
+  .appnav,
+  .install-banner,
+  .filter-row,
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+}
