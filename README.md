@@ -56,6 +56,10 @@ Every active employee's `pto_balance_hours` accrues automatically via a daily `p
 
 Only PTO requests go through admin approval (`pto_requests.status` + `review_pto_request`). Time entries do not - employees clock in/out live only, with no self-service add or edit (removed in `0008_remove_employee_manual_time_entry.sql`; a DB trigger blocks any non-admin change to `clock_in` on a `self`-sourced entry, on top of the narrower RLS policies, so this holds even against a direct API call). Admins can add or correct any employee's entries at any time from **Timesheets** (`/admin/timesheets`), with a required reason for the record.
 
+## Clock-in/out geolocation
+
+Every live clock in/out captures a best-effort device location via the browser Geolocation API (`src/lib/geolocation.ts`), saved to `clock_in_lat/lng/accuracy_m` and `clock_out_lat/lng/accuracy_m` (`0009_time_entry_geolocation.sql`). It's always optional - a denied, unsupported, or slow (>6s) location never blocks the punch, it just saves as null. Admins see a "map" link next to any clock in/out that has a location on **Timesheets** (`/admin/timesheets`); employees don't see it on their own `/timesheet`. Manual admin entries never carry a location (they aren't a real device capture).
+
 ## Creating employee accounts
 
 There is no public signup - an admin creates each employee's login. Easiest path for 10-15 people: Supabase Dashboard → **Authentication → Users → Add user** (set an email + temp password, or send an invite email). A `profiles` row is auto-created for each new user (via a DB trigger); then set that employee's `role` (`employee`/`admin`) and `pay_type` (`hourly`/`salaried`) either in **Table Editor → profiles**, or via a small admin screen once one exists in the app.

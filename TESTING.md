@@ -99,6 +99,14 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] Verified live: with all current test data inside the last 7 days, all three cards correctly show the same 14.61 total. Checked at mobile width (375px) - cards wrap 2-then-1 with no page-level horizontal scroll (`document.documentElement.scrollWidth === window.innerWidth`).
 - [ ] Not yet verified with data older than 7 days: confirm Last 30/60 Days grows relative to Last 7 Days once an entry outside the most recent week exists.
 
+## Clock in/out geolocation (0009_time_entry_geolocation.sql) ✅ verified
+
+- [x] Clock In / Clock Out capture best-effort device location (`src/lib/geolocation.ts`) and save it to the new `clock_in_lat/lng/accuracy_m` and `clock_out_lat/lng/accuracy_m` columns - never blocks the punch itself, and resolves to null within 6s if permission is denied/unavailable/slow.
+- [x] Verified with location denied/unsupported (the default in this sandboxed test browser): clock in and clock out both completed instantly with no error, no console errors, columns saved null.
+- [x] Verified with a simulated granted location (overrode `navigator.geolocation.getCurrentPosition` to return a fixed coordinate): both clock-in and clock-out rows saved lat/lng correctly.
+- [x] Admin-only visibility confirmed: `/admin/timesheets` shows a small orange "map" link (`https://www.google.com/maps?q=lat,lng`) next to any clock-in/out time that has a location, opening in a new tab; rows without one show nothing extra. `/timesheet` (the employee's own view) never shows a map link or the raw coordinates, by design.
+- [ ] Not yet tested on a real phone: actual permission-prompt UX (first-time "Allow location?" browser dialog) and real GPS accuracy.
+
 ## Change password (new `/account` page) ✅ verified
 
 - [x] Clicking your own name in the top nav (any role) now opens `/account` instead of being plain text; it also highlights orange like other active nav links.

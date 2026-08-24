@@ -56,6 +56,12 @@ export interface Database {
           edited_by: string | null;
           edit_reason: string | null;
           notes: string | null;
+          clock_in_lat: number | null;
+          clock_in_lng: number | null;
+          clock_in_accuracy_m: number | null;
+          clock_out_lat: number | null;
+          clock_out_lng: number | null;
+          clock_out_accuracy_m: number | null;
           created_at: string;
         };
         Insert: {
@@ -67,6 +73,12 @@ export interface Database {
           edited_by?: string | null;
           edit_reason?: string | null;
           notes?: string | null;
+          clock_in_lat?: number | null;
+          clock_in_lng?: number | null;
+          clock_in_accuracy_m?: number | null;
+          clock_out_lat?: number | null;
+          clock_out_lng?: number | null;
+          clock_out_accuracy_m?: number | null;
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['time_entries']['Insert']>;

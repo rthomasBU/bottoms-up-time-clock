@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAdminTimeEntries, defaultFilters, type AdminTimeEntryRow } from '../../hooks/useAdminTimeEntries';
 import { useEmployees } from '../../hooks/useEmployees';
 import { hoursBetween, formatDateTime } from '../../lib/time';
+import { mapLinkUrl } from '../../lib/geolocation';
 
 interface EmployeeGroup {
   employeeId: string;
@@ -107,8 +108,38 @@ export function TimesheetsPage() {
               <tbody>
                 {group.entries.map((entry) => (
                   <tr key={entry.id} className="row">
-                    <td>{formatDateTime(entry.clock_in)}</td>
-                    <td>{entry.clock_out ? formatDateTime(entry.clock_out) : 'still clocked in'}</td>
+                    <td>
+                      {formatDateTime(entry.clock_in)}
+                      {entry.clock_in_lat != null && entry.clock_in_lng != null && (
+                        <>
+                          {' '}
+                          <a
+                            href={mapLinkUrl(entry.clock_in_lat, entry.clock_in_lng)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="row-map-link"
+                          >
+                            map
+                          </a>
+                        </>
+                      )}
+                    </td>
+                    <td>
+                      {entry.clock_out ? formatDateTime(entry.clock_out) : 'still clocked in'}
+                      {entry.clock_out_lat != null && entry.clock_out_lng != null && (
+                        <>
+                          {' '}
+                          <a
+                            href={mapLinkUrl(entry.clock_out_lat, entry.clock_out_lng)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="row-map-link"
+                          >
+                            map
+                          </a>
+                        </>
+                      )}
+                    </td>
                     <td className="num">
                       {entry.clock_out ? hoursBetween(entry.clock_in, entry.clock_out).toFixed(2) : '-'}
                     </td>
