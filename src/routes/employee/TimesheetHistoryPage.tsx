@@ -1,9 +1,6 @@
-import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useTimesheet } from '../../hooks/useTimesheet';
-import { hoursBetween, formatTime, formatDate, daysAgo } from '../../lib/time';
-
-const SELF_EDIT_WINDOW_DAYS = 14;
+import { hoursBetween, formatTime, formatDate } from '../../lib/time';
 
 export function TimesheetHistoryPage() {
   const { profile } = useAuth();
@@ -13,19 +10,13 @@ export function TimesheetHistoryPage() {
     (sum, e) => (e.clock_out ? sum + hoursBetween(e.clock_in, e.clock_out) : sum),
     0,
   );
-  const editCutoff = daysAgo(SELF_EDIT_WINDOW_DAYS);
 
   return (
     <div>
-      <div className="toolbar" style={{ justifyContent: 'space-between' }}>
-        <h1>
-          Your <span>Timesheet</span>
-        </h1>
-        <Link to="/timesheet/entries/new" className="btn-build">
-          + Add Entry
-        </Link>
-      </div>
-      <p className="sub">Your clock in and clock out history for the last 60 days.</p>
+      <h1>
+        Your <span>Timesheet</span>
+      </h1>
+      <p className="sub">Your clock in and clock out history for the last 60 days. Spot a mistake? Ask an admin to fix it.</p>
 
       <div className="card kpi" style={{ maxWidth: 220 }}>
         <div className="label">Period Total</div>
@@ -46,7 +37,6 @@ export function TimesheetHistoryPage() {
                 <th>Time</th>
                 <th>Hours</th>
                 <th></th>
-                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -57,14 +47,7 @@ export function TimesheetHistoryPage() {
                     {formatTime(e.clock_in)} - {e.clock_out ? formatTime(e.clock_out) : 'now'}
                   </td>
                   <td className="num">{e.clock_out ? hoursBetween(e.clock_in, e.clock_out).toFixed(2) : '-'}</td>
-                  <td>{e.edited_by && <span className="tag muted">edited</span>}</td>
-                  <td>
-                    {new Date(e.clock_in) >= editCutoff && (
-                      <Link to={`/timesheet/entries/${e.id}`} className="btn-clear">
-                        Edit
-                      </Link>
-                    )}
-                  </td>
+                  <td>{e.edited_by && <span className="tag muted">{e.source === 'self' ? 'edited' : 'edited by admin'}</span>}</td>
                 </tr>
               ))}
             </tbody>

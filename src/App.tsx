@@ -5,7 +5,6 @@ import { LoginPage } from './routes/auth/LoginPage';
 import { AccountPage } from './routes/auth/AccountPage';
 import { ClockPage } from './routes/employee/ClockPage';
 import { TimesheetHistoryPage } from './routes/employee/TimesheetHistoryPage';
-import { TimeEntryEditPage as EmployeeTimeEntryEditPage } from './routes/employee/TimeEntryEditPage';
 import { PtoPage } from './routes/employee/PtoPage';
 import { CalendarPage } from './routes/employee/CalendarPage';
 import { DashboardPage } from './routes/admin/DashboardPage';
@@ -33,22 +32,6 @@ export default function App() {
           element={
             <RoleGuard allow={['employee', 'admin']}>
               <TimesheetHistoryPage />
-            </RoleGuard>
-          }
-        />
-        <Route
-          path="/timesheet/entries/new"
-          element={
-            <RoleGuard allow={['employee', 'admin']}>
-              <EmployeeTimeEntryEditPage />
-            </RoleGuard>
-          }
-        />
-        <Route
-          path="/timesheet/entries/:id"
-          element={
-            <RoleGuard allow={['employee', 'admin']}>
-              <EmployeeTimeEntryEditPage />
             </RoleGuard>
           }
         />

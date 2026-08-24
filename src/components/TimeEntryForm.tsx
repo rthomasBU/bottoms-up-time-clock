@@ -3,27 +3,24 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../hooks/useAuth';
 import { useEmployees } from '../hooks/useEmployees';
-import { toDatetimeLocalValue, fromDatetimeLocalValue, daysAgo } from '../lib/time';
-
-const SELF_EDIT_WINDOW_DAYS = 14;
+import { toDatetimeLocalValue, fromDatetimeLocalValue } from '../lib/time';
 
 interface TimeEntryFormProps {
-  /** 'admin' can pick any employee and isn't bound by the edit window.
-   *  'self' is fixed to the current user and limited to the last 14 days,
-   *  matching the RLS policies in 0004_remove_time_entry_approval.sql. */
-  mode: 'admin' | 'self';
   /** Where to navigate after a successful save or Cancel. */
   redirectTo: string;
 }
 
-export function TimeEntryForm({ mode, redirectTo }: TimeEntryFormProps) {
+/** Admin-only manual add/edit of any employee's time entries. Employees no
+ *  longer get a self-service version of this form - see
+ *  0008_remove_employee_manual_time_entry.sql. */
+export function TimeEntryForm({ redirectTo }: TimeEntryFormProps) {
   const { id } = useParams<{ id: string }>();
   const isNew = !id;
   const navigate = useNavigate();
   const { profile } = useAuth();
   const { employees } = useEmployees();
 
-  const [employeeId, setEmployeeId] = useState(mode === 'self' ? (profile?.id ?? '') : '');
+  const [employeeId, setEmployeeId] = useState('');
   const [clockIn, setClockIn] = useState('');
   const [clockOut, setClockOut] = useState('');
   const [editReason, setEditReason] = useState('');
@@ -31,8 +28,6 @@ export function TimeEntryForm({ mode, redirectTo }: TimeEntryFormProps) {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const minClockIn = mode === 'self' ? toDatetimeLocalValue(daysAgo(SELF_EDIT_WINDOW_DAYS).toISOString()) : undefined;
 
   useEffect(() => {
     if (isNew) return;
@@ -57,15 +52,11 @@ export function TimeEntryForm({ mode, redirectTo }: TimeEntryFormProps) {
       setError('A reason is required so there is a clear record of what changed.');
       return;
     }
-    if (mode === 'self' && minClockIn && clockIn < minClockIn) {
-      setError(`You can only add or edit entries from the last ${SELF_EDIT_WINDOW_DAYS} days. Ask an admin to fix anything older.`);
-      return;
-    }
     setSaving(true);
     setError(null);
 
     const payload = {
-      employee_id: mode === 'self' ? (profile.id) : employeeId,
+      employee_id: employeeId,
       clock_in: fromDatetimeLocalValue(clockIn),
       clock_out: clockOut ? fromDatetimeLocalValue(clockOut) : null,
       notes: notes || null,
@@ -74,9 +65,7 @@ export function TimeEntryForm({ mode, redirectTo }: TimeEntryFormProps) {
     };
 
     const result = isNew
-      ? await supabase
-          .from('time_entries')
-          .insert({ ...payload, source: mode === 'admin' ? 'admin_manual' : 'self' })
+      ? await supabase.from('time_entries').insert({ ...payload, source: 'admin_manual' })
       : await supabase.from('time_entries').update(payload).eq('id', id);
 
     setSaving(false);
@@ -91,40 +80,31 @@ export function TimeEntryForm({ mode, redirectTo }: TimeEntryFormProps) {
       <h1>
         {isNew ? 'Add Time' : 'Edit Time'} <span>Entry</span>
       </h1>
-      <p className="sub">
-        {mode === 'self'
-          ? `Corrections require a reason and must be within the last ${SELF_EDIT_WINDOW_DAYS} days.`
-          : "Corrections require a note so there's a clear record of what changed."}
-      </p>
+      <p className="sub">Corrections require a note so there's a clear record of what changed.</p>
       <form className="entry-form" onSubmit={(e) => void handleSubmit(e)}>
-        {mode === 'admin' && (
-          <>
-            <label htmlFor="employee">Employee</label>
-            <select
-              id="employee"
-              required
-              disabled={!isNew}
-              value={employeeId}
-              onChange={(e) => setEmployeeId(e.target.value)}
-            >
-              <option value="" disabled>
-                Select employee...
-              </option>
-              {employees.map((emp) => (
-                <option key={emp.id} value={emp.id}>
-                  {emp.full_name}
-                </option>
-              ))}
-            </select>
-          </>
-        )}
+        <label htmlFor="employee">Employee</label>
+        <select
+          id="employee"
+          required
+          disabled={!isNew}
+          value={employeeId}
+          onChange={(e) => setEmployeeId(e.target.value)}
+        >
+          <option value="" disabled>
+            Select employee...
+          </option>
+          {employees.map((emp) => (
+            <option key={emp.id} value={emp.id}>
+              {emp.full_name}
+            </option>
+          ))}
+        </select>
 
         <label htmlFor="clock-in">Clock in</label>
         <input
           id="clock-in"
           type="datetime-local"
           required
-          min={minClockIn}
           value={clockIn}
           onChange={(e) => setClockIn(e.target.value)}
         />
@@ -133,7 +113,6 @@ export function TimeEntryForm({ mode, redirectTo }: TimeEntryFormProps) {
         <input
           id="clock-out"
           type="datetime-local"
-          min={minClockIn}
           value={clockOut}
           onChange={(e) => setClockOut(e.target.value)}
         />

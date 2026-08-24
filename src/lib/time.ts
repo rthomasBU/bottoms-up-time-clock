@@ -53,15 +53,6 @@ export function fromDatetimeLocalValue(value: string): string {
   return new Date(value).toISOString();
 }
 
-/**
- * Rolling N-day-ago cutoff as a Date, matching the RLS window
- * (`clock_in >= now() - interval 'N days'`) so client-side validation
- * agrees with what the server will actually accept.
- */
-export function daysAgo(days: number, now: Date = new Date()): Date {
-  return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
-}
-
 /** Monday 00:00:00 through Sunday 23:59:59.999 of the week containing `now`,
  *  matching the Monday-start pay period convention used elsewhere
  *  (see src/lib/payroll.ts). */

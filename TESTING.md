@@ -83,6 +83,16 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] `/admin/timesheets` now groups entries under a numbered `.section-head` per employee (alphabetical by name), each with its own hours subtotal tag and its own table, instead of one flat table with a repeated Employee column.
 - [x] Verified live with three employees in range: Brian Pitre (0.00 hrs, still clocked in), Chris Wiles (0.08 hrs), Ryan Thomas (12.62 hrs, including self-edited/admin-edited rows with notes) - all correctly separated, edit links still work per row, no console errors.
 
+## Manual time entry removed for non-admin employees (0008_remove_employee_manual_time_entry.sql)
+
+- [x] `/timesheet` no longer shows "+ Add Entry" or an "Edit" link on any row - employees can only clock in/out live. Historical rows still show "EDITED" (their own past self-edit) vs "EDITED BY ADMIN" correctly via `source`.
+- [x] `/timesheet/entries/new` and `/timesheet/entries/:id` routes removed entirely; navigating there directly renders nothing (same as any other unmatched route in this app - no catch-all/404 page exists yet).
+- [x] `/admin/entries/new` still works unchanged - employee picker, no date-window restriction, reason still required.
+- [x] `npm run typecheck` / `npm run lint` / `npm run build` all clean after removing `TimeEntryForm`'s `mode` prop and the now-dead `daysAgo` helper.
+- [ ] **RLS check (not yet run against the live project)**: as a non-admin, `insert into time_entries (employee_id, clock_in, source) values (auth.uid(), now() - interval '1 day', 'self')` must be rejected (backdated self-insert, outside the 5-minute live-clock-in window).
+- [ ] **RLS check (not yet run)**: as a non-admin, `update time_entries set clock_in = clock_in - interval '1 hour' where id = <your own open entry>` must be rejected by the `time_entries_prevent_self_backdating` trigger.
+- [ ] **RLS check (not yet run)**: as a non-admin, clocking out via `update ... set clock_out = now(), edit_reason = 'test' where id = <your own open entry>` must be rejected (edit_reason no longer allowed on the self clock-out path).
+
 ## Change password (new `/account` page) ✅ verified
 
 - [x] Clicking your own name in the top nav (any role) now opens `/account` instead of being plain text; it also highlights orange like other active nav links.

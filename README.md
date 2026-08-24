@@ -54,7 +54,7 @@ Every active employee's `pto_balance_hours` accrues automatically via a daily `p
 
 ## Approval workflow
 
-Only PTO requests go through admin approval (`pto_requests.status` + `review_pto_request`). Time entries do not - employees clock in/out live and can also add or correct their own entries from the last 14 days (a reason is required for any manual add/edit). Admins can still browse and correct any employee's entries at any time from **Timesheets** (`/admin/timesheets`), just without an approve step.
+Only PTO requests go through admin approval (`pto_requests.status` + `review_pto_request`). Time entries do not - employees clock in/out live only, with no self-service add or edit (removed in `0008_remove_employee_manual_time_entry.sql`; a DB trigger blocks any non-admin change to `clock_in` on a `self`-sourced entry, on top of the narrower RLS policies, so this holds even against a direct API call). Admins can add or correct any employee's entries at any time from **Timesheets** (`/admin/timesheets`), with a required reason for the record.
 
 ## Creating employee accounts
 
