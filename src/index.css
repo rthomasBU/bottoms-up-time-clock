@@ -167,6 +167,14 @@ button:focus-visible {
 .appnav .appnav-right button:hover {
   color: var(--danger);
 }
+.appnav .appnav-right a {
+  color: var(--gray);
+  text-decoration: none;
+}
+.appnav .appnav-right a:hover,
+.appnav .appnav-right a.active {
+  color: var(--orange);
+}
 
 /* Headings */
 h1 {

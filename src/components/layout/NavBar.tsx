@@ -43,7 +43,9 @@ export function NavBar() {
         </>
       )}
       <div className="appnav-right">
-        <span>{profile.full_name}</span>
+        <NavLink to="/account" className={linkClass}>
+          {profile.full_name}
+        </NavLink>
         <button type="button" onClick={() => void signOut()}>
           Sign out
         </button>

@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import { AppShell } from './components/layout/AppShell';
 import { RoleGuard } from './components/layout/RoleGuard';
 import { LoginPage } from './routes/auth/LoginPage';
+import { AccountPage } from './routes/auth/AccountPage';
 import { ClockPage } from './routes/employee/ClockPage';
 import { TimesheetHistoryPage } from './routes/employee/TimesheetHistoryPage';
 import { TimeEntryEditPage as EmployeeTimeEntryEditPage } from './routes/employee/TimeEntryEditPage';
@@ -48,6 +49,14 @@ export default function App() {
           element={
             <RoleGuard allow={['employee', 'admin']}>
               <EmployeeTimeEntryEditPage />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="/account"
+          element={
+            <RoleGuard allow={['employee', 'admin']}>
+              <AccountPage />
             </RoleGuard>
           }
         />

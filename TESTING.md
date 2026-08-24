@@ -83,6 +83,14 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] `/admin/timesheets` now groups entries under a numbered `.section-head` per employee (alphabetical by name), each with its own hours subtotal tag and its own table, instead of one flat table with a repeated Employee column.
 - [x] Verified live with three employees in range: Brian Pitre (0.00 hrs, still clocked in), Chris Wiles (0.08 hrs), Ryan Thomas (12.62 hrs, including self-edited/admin-edited rows with notes) - all correctly separated, edit links still work per row, no console errors.
 
+## Change password (new `/account` page) ✅ verified
+
+- [x] Clicking your own name in the top nav (any role) now opens `/account` instead of being plain text; it also highlights orange like other active nav links.
+- [x] Change Password form requires current password, new password (min 8 chars), and a matching confirmation, all client-side validated before any network call.
+- [x] Submitting re-verifies the current password via `signInWithPassword` before calling `supabase.auth.updateUser({ password })`, so someone at an unlocked/shared device can't change a password without knowing the existing one.
+- [x] Verified live: mismatched new/confirm shows "New password and confirmation do not match." without any network call; a wrong current password shows "Current password is incorrect." and confirmed the existing session stays fully intact afterward (re-checked by navigating to `/`, still signed in, no console errors).
+- [ ] Not yet run: full happy-path test with a real correct current password (didn't want to actually rotate a live account's password during this pass) - confirm success message shows and the new password actually signs in afterward.
+
 ## Phase 4 - PTO tracking ✅ verified
 
 - [x] Submitting a request shows it as `pending` in "Your requests" with correct dates (watch for timezone bugs on `date`-only columns - fixed once, worth re-checking after any date-formatting change).
