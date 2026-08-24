@@ -2,6 +2,8 @@
 
 Time clock / hours-tracking web app for Bottoms Up employees (hourly + salaried), built as an installable PWA. See the implementation plan for full context on requirements and architecture.
 
+**Live**: https://bottoms-up-time-clock.vercel.app - deployed on Vercel, auto-deploys on every push to `main` (GitHub repo: `rthomasBU/bottoms-up-time-clock`).
+
 ## Branding
 
 Styled to the Bottoms Up house web style guide (black topbar, orange/black/gray palette, Saira Semi Condensed uppercase headings, light theme only). Class names in `src/index.css` match the guide exactly so this app pattern-matches with the rest of the internal tool suite. The logo lives at `public/logo.png`; do not recolor, stretch, or crop it. Helvetica Neue is referenced by name only in the CSS font stack and must never be bundled as a font file (no license held for it) - Windows falls back to Arial, which is expected.
