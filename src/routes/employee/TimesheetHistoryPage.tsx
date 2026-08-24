@@ -1,15 +1,23 @@
 import { useAuth } from '../../hooks/useAuth';
 import { useTimesheet } from '../../hooks/useTimesheet';
 import { hoursBetween, formatTime, formatDate } from '../../lib/time';
+import type { Database } from '../../lib/database.types';
+
+type TimeEntry = Database['public']['Tables']['time_entries']['Row'];
+
+/** Sum of closed entries' hours with clock_in in the last `days` days. */
+function hoursInLastDays(entries: TimeEntry[], days: number): number {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  return entries.reduce(
+    (sum, e) => (e.clock_out && new Date(e.clock_in) >= cutoff ? sum + hoursBetween(e.clock_in, e.clock_out) : sum),
+    0,
+  );
+}
 
 export function TimesheetHistoryPage() {
   const { profile } = useAuth();
   const { entries, loading, error } = useTimesheet(profile?.id);
-
-  const periodTotal = entries.reduce(
-    (sum, e) => (e.clock_out ? sum + hoursBetween(e.clock_in, e.clock_out) : sum),
-    0,
-  );
 
   return (
     <div>
@@ -18,10 +26,22 @@ export function TimesheetHistoryPage() {
       </h1>
       <p className="sub">Your clock in and clock out history for the last 60 days. Spot a mistake? Ask an admin to fix it.</p>
 
-      <div className="card kpi" style={{ maxWidth: 220 }}>
-        <div className="label">Period Total</div>
-        <div className="big">{periodTotal.toFixed(2)}</div>
-        <div className="unit">hours</div>
+      <div className="kpis">
+        <div className="card kpi">
+          <div className="label">Last 7 Days</div>
+          <div className="big">{hoursInLastDays(entries, 7).toFixed(2)}</div>
+          <div className="unit">hours</div>
+        </div>
+        <div className="card kpi">
+          <div className="label">Last 30 Days</div>
+          <div className="big">{hoursInLastDays(entries, 30).toFixed(2)}</div>
+          <div className="unit">hours</div>
+        </div>
+        <div className="card kpi">
+          <div className="label">Last 60 Days</div>
+          <div className="big">{hoursInLastDays(entries, 60).toFixed(2)}</div>
+          <div className="unit">hours</div>
+        </div>
       </div>
 
       {error && <p className="form-error">{error}</p>}

@@ -93,6 +93,12 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [ ] **RLS check (not yet run)**: as a non-admin, `update time_entries set clock_in = clock_in - interval '1 hour' where id = <your own open entry>` must be rejected by the `time_entries_prevent_self_backdating` trigger.
 - [ ] **RLS check (not yet run)**: as a non-admin, clocking out via `update ... set clock_out = now(), edit_reason = 'test' where id = <your own open entry>` must be rejected (edit_reason no longer allowed on the self clock-out path).
 
+## Employee timesheet grouped hours by 7/30/60 days ✅ verified
+
+- [x] `/timesheet` replaced the single "Period Total" card with three `.kpis` cards - Last 7 Days, Last 30 Days, Last 60 Days - each a cumulative running total (not exclusive buckets), computed client-side off the same 60-day fetch `useTimesheet` already does, no extra query.
+- [x] Verified live: with all current test data inside the last 7 days, all three cards correctly show the same 14.61 total. Checked at mobile width (375px) - cards wrap 2-then-1 with no page-level horizontal scroll (`document.documentElement.scrollWidth === window.innerWidth`).
+- [ ] Not yet verified with data older than 7 days: confirm Last 30/60 Days grows relative to Last 7 Days once an entry outside the most recent week exists.
+
 ## Change password (new `/account` page) ✅ verified
 
 - [x] Clicking your own name in the top nav (any role) now opens `/account` instead of being plain text; it also highlights orange like other active nav links.
