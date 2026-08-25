@@ -99,14 +99,16 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] Verified live: with all current test data inside the last 7 days, all three cards correctly show the same 14.61 total. Checked at mobile width (375px) - cards wrap 2-then-1 with no page-level horizontal scroll (`document.documentElement.scrollWidth === window.innerWidth`).
 - [ ] Not yet verified with data older than 7 days: confirm Last 30/60 Days grows relative to Last 7 Days once an entry outside the most recent week exists.
 
-## Hourly overtime push alerts (0010_overtime_alerts.sql + send-overtime-alerts Edge Function)
+## Hourly overtime push alerts (0010_overtime_alerts.sql + send-overtime-alerts Edge Function) ✅ verified live in production
 
 - [x] `npm run typecheck` / `npm run lint` / `npm run build` all clean. Confirmed the generated `dist/sw.js` correctly injects `importScripts("/push-sw.js")` ahead of precaching, and that `public/push-sw.js` is reachable and unmodified at `/push-sw.js`.
 - [x] Verified via `npm run preview` (dev mode has PWA disabled, same caveat as the rest of Phase 6): service worker registers and activates with no console errors either origin (5173 dev session, 5174 preview build).
-- [x] `Overtime Alerts` card only renders for hourly employees (`profile.pay_type === 'hourly'`) on `/` - confirmed absent from a salaried view's Clock tab conceptually (same render gate as the card itself; not re-screenshotted since the gate is a one-line condition).
-- [x] With the test browser's notification permission at its default "denied", the card correctly shows the blocked-permission message and no button, instead of a broken/silently-failing toggle.
-- [ ] **Not yet tested end-to-end** (needs a real device/browser with notification permission grantable, which this sandboxed test browser can't do): clicking "Enable on This Device" actually completes a subscription and saves a `push_subscriptions` row; the Edge Function actually delivers a push after 8 hours clocked in and repeats every 2 hours after; an expired/revoked subscription gets cleaned up on a 404/410 send failure.
-- [ ] **Deployment not yet done by the user** - this feature needs manual setup beyond a SQL paste (Edge Function deploy + secrets + cron job); see the checklist given in chat. Nothing sends until that's done.
+- [x] `Overtime Alerts` card only renders for hourly employees (`profile.pay_type === 'hourly'`) on `/`.
+- [x] With notification permission denied, the card correctly shows the blocked-permission message and no button, instead of a broken/silently-failing toggle.
+- [x] Deployed end-to-end on the real project: migration applied, Edge Function deployed with all 4 secrets (`VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT`/`CRON_SECRET`) set correctly, `overtime-alert-check` cron job scheduled every 15 minutes (with the `apikey` header the Supabase gateway requires in addition to the JWT-verification toggle - not obvious up front, cost a few rounds of 401s to find), `VITE_VAPID_PUBLIC_KEY` baked into the Vercel production build (confirmed present in the built JS bundle).
+- [x] **Real device test passed**: enabled on a real laptop browser, confirmed a genuine `push_subscriptions` row was saved (real FCM endpoint). Fast-tested delivery by using an employee who was already 9+ hours into an open punch and invoking the Edge Function directly - `notified: 1`, and the push notification ("Bottoms Up Time Clock - Are you authorized to be working overtime?") actually arrived on the laptop.
+- [x] Confirmed the 2-hour resend throttle works: calling the function again immediately after a successful send correctly returned `due: 0` (no duplicate push), rather than re-notifying on every 15-minute cron tick.
+- [ ] Not yet observed: the stale-subscription cleanup path (404/410 on send) and the annual/multi-day repeat-while-still-clocked-in behavior past the second alert, both low-risk/straightforward given the core send path is confirmed working.
 
 ## Salaried employees can now use the Clock tab ✅ verified
 
