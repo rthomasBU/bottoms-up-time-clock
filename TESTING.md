@@ -93,6 +93,12 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [ ] **RLS check (not yet run)**: as a non-admin, `update time_entries set clock_in = clock_in - interval '1 hour' where id = <your own open entry>` must be rejected by the `time_entries_prevent_self_backdating` trigger.
 - [ ] **RLS check (not yet run)**: as a non-admin, clocking out via `update ... set clock_out = now(), edit_reason = 'test' where id = <your own open entry>` must be rejected (edit_reason no longer allowed on the self clock-out path).
 
+## Admin Timesheets: removed the Employee filter dropdown ✅ verified
+
+- [x] `/admin/timesheets` no longer has an "Employee" filter dropdown (still lists every employee, per the previous change) - expanding one row is now the only way to drill into a specific person's hours, so there's no longer two different ways to narrow the view. Date range (From/To) filters remain.
+- [x] Confirmed **Export** (`/admin/export`) still has its own independent Employee dropdown, untouched - that's a genuinely separate feature (single-employee payroll export) where a dropdown still makes sense, not just leftover duplication.
+- [x] Verified live in a fresh tab: all 5 employees list with no dropdown, expand/collapse works correctly and independently per row (confirmed via ref-targeted clicks, not just coordinates), no console errors.
+
 ## Admin Timesheets: full roster, expandable per employee ✅ verified
 
 - [x] `/admin/timesheets` now always lists every active employee (from `useEmployees`, not just whoever has entries in the selected range) - built via a new `buildEmployeeGroups(employees, entries)` that left-joins entries onto the full roster, so a 0-entry employee still gets a row (muted "0.00 hrs" tag) instead of silently vanishing.

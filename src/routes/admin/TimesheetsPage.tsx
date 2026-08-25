@@ -43,18 +43,14 @@ export function TimesheetsPage() {
   const { employees } = useEmployees();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
-  const visibleEmployees = useMemo(
-    () => (filters.employeeId === 'all' ? employees : employees.filter((emp) => emp.id === filters.employeeId)),
-    [employees, filters.employeeId],
-  );
-  const groups = useMemo(() => buildEmployeeGroups(visibleEmployees, entries), [visibleEmployees, entries]);
+  const groups = useMemo(() => buildEmployeeGroups(employees, entries), [employees, entries]);
 
-  // Filtering down to one employee always shows them expanded (there's
-  // nothing else on the page to toggle); otherwise expansion is manual and
-  // starts collapsed, so a full 10-15 person roster doesn't dump every
-  // pay-period/day breakdown on screen at once.
+  // Starts collapsed for everyone - expanding a specific employee (instead
+  // of filtering the whole page down to just them) is how you drill into
+  // one person's hours here, so a full 10-15 person roster doesn't dump
+  // every pay-period/day breakdown on screen at once.
   function isExpanded(employeeId: string) {
-    return filters.employeeId !== 'all' || expandedIds.has(employeeId);
+    return expandedIds.has(employeeId);
   }
 
   function toggle(employeeId: string) {
@@ -97,21 +93,6 @@ export function TimesheetsPage() {
             onChange={(e) => setFilters({ ...filters, to: e.target.value })}
           />
         </div>
-        <div className="fcol">
-          <label htmlFor="employee">Employee</label>
-          <select
-            id="employee"
-            value={filters.employeeId}
-            onChange={(e) => setFilters({ ...filters, employeeId: e.target.value })}
-          >
-            <option value="all">All</option>
-            {employees.map((emp) => (
-              <option key={emp.id} value={emp.id}>
-                {emp.full_name}
-              </option>
-            ))}
-          </select>
-        </div>
       </div>
 
       {error && <p className="form-error">{error}</p>}
@@ -128,18 +109,15 @@ export function TimesheetsPage() {
               className="section-head-toggle"
               onClick={() => toggle(group.employeeId)}
               aria-expanded={expanded}
-              disabled={filters.employeeId !== 'all'}
             >
               <span className="num">{i + 1}</span>
               <h2>{group.fullName}</h2>
               <span className={`tag ${group.totalHours > 0 ? 'ok' : 'muted'}`} style={{ marginLeft: 'auto' }}>
                 {group.totalHours.toFixed(2)} hrs
               </span>
-              {filters.employeeId === 'all' && (
-                <span className="chevron" aria-hidden="true">
-                  {expanded ? '▾' : '▸'}
-                </span>
-              )}
+              <span className="chevron" aria-hidden="true">
+                {expanded ? '▾' : '▸'}
+              </span>
             </button>
           </div>
 
