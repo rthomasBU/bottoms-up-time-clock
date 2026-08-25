@@ -50,7 +50,7 @@ Every active employee's `pto_balance_hours` accrues automatically via a daily `p
 
 ## Home-page calendar
 
-`/` shows a month calendar (`src/components/MonthCalendar.tsx`) for every employee with three event types: **paydays** (pure client-side arithmetic in `src/lib/payroll.ts` - the Friday following each 2-week pay period, anchored to 2026-08-23, no DB table involved), **holidays** (admin-managed at `/admin/holidays`, visible to everyone), and **approved PTO/sick time for the whole team** (a "who's out" view - `pto_requests_select_approved_all` in `0006_holidays_and_calendar.sql` additively widens visibility for approved rows only; pending/denied requests still stay private to the owner + admin).
+`/` shows a month calendar (`src/components/MonthCalendar.tsx`) for every employee with three event types: **paydays** (pure client-side arithmetic in `src/lib/payroll.ts` - the Friday following each 2-week pay period, anchored to 2026-08-23, no DB table involved), **holidays** (admin-managed at `/admin/holidays`, visible to everyone - can add/edit/remove one at a time, or one-click add the current or next year's 11 U.S. federal holidays via `src/lib/federalHolidays.ts`, which computes the correct date each year rather than hardcoding one), and **approved PTO/sick time for the whole team** (a "who's out" view - `pto_requests_select_approved_all` in `0006_holidays_and_calendar.sql` additively widens visibility for approved rows only; pending/denied requests still stay private to the owner + admin).
 
 ## Approval workflow
 
