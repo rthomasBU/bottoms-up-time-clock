@@ -98,6 +98,13 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] No console errors on a fresh tab (a second, pre-existing tab's console history had stale Vite HMR errors referencing removed code from earlier in the session - confirmed those don't reproduce on a fresh navigation, per the established stale-HMR pattern).
 - [x] `npm run typecheck` / `npm run lint` / `npm run build` all clean.
 
+## Per-day table columns no longer misalign ✅ verified live
+
+- [x] Fixed a real bug reported by the user (with a screenshot of `/admin/timesheets`): Timesheets Browser and the employee Timesheet page each render one separate `<table>` per day, and a plain HTML table auto-sizes its own columns from its own content only - so a day with a wider row (a self-edited/admin-edited badge + note) ended up with different column widths than a day without one, even though visually stacked as if they were one continuous table. `table.entries-table` (`index.css`) now uses `table-layout: fixed` with an explicit `<colgroup>` on both tables, forcing every day's columns to the same widths regardless of that day's own content.
+- [x] First pass used percentage-only column widths with no `min-width`, which broke at mobile width (375px) - the Hours column's fixed 9% share (~50px) minus cell padding left too little room for "8.10" to render on one line, so single "words" with no space to break on (numbers) wrapped character-by-character ("8\n.\n1\n0"). Caught this live during verification, not assumed - fixed by giving `.entries-table` a `min-width` (620px admin/5-col, 380px employee/3-col via `.entries-table-compact`) so `.tablewrap`'s existing horizontal scroll takes over instead of squeezing columns below a legible width, and widening the Hours column's share (9% -> 13%).
+- [x] Verified live on both `/admin/timesheets` (Ryan Thomas, Aug 24-Sep 6 period, the exact case from the user's screenshot - Aug 25 has 2 self-edited rows with notes, Aug 24 has none) and `/timesheet` (same data, employee view): Clock In/Clock Out/Hours (or Time/Hours) columns now line up pixel-for-pixel between consecutive day tables, at both desktop and 375px mobile width; numbers render on one line at mobile width via the table's own horizontal scroll rather than wrapping.
+- [x] No console errors on a fresh tab. `npm run typecheck` / `npm run build` clean.
+
 ## Tech Support day logging (0014_tech_support_days.sql) ✅ verified live
 
 - [x] `npm run typecheck` / `npm run lint` / `npm run build` all clean.

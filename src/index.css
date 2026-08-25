@@ -548,6 +548,26 @@ table {
   width: 100%;
   font-size: 14px;
 }
+/* A table's columns auto-size to that table's own content only - fine for
+   a single table, but a page that stacks one <table> per day (Timesheets
+   Browser, employee Timesheet) ends up with each day's columns landing at
+   different widths whenever one day has wider content than the rest (e.g.
+   a self-edited/admin-edited badge + note). table-layout: fixed plus an
+   explicit <colgroup> forces every day's table to the same widths
+   regardless of that day's own content. */
+table.entries-table {
+  table-layout: fixed;
+  min-width: 620px;
+}
+table.entries-table td {
+  overflow-wrap: break-word;
+}
+/* The employee Timesheet's version only has 3 columns (no map links, no
+   edit link), so it needs less room before .tablewrap's horizontal scroll
+   should take over instead of squeezing single words like "8.10" apart. */
+table.entries-table.entries-table-compact {
+  min-width: 380px;
+}
 th {
   font-family: var(--heading);
   text-transform: uppercase;

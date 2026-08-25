@@ -191,7 +191,14 @@ export function TimesheetsPage() {
                     <span className="tag muted">{day.totalHours.toFixed(2)} hrs</span>
                   </div>
                   <div className="tablewrap">
-                    <table>
+                    <table className="entries-table">
+                      <colgroup>
+                        <col style={{ width: '18%' }} />
+                        <col style={{ width: '18%' }} />
+                        <col style={{ width: '13%' }} />
+                        <col />
+                        <col style={{ width: '9%' }} />
+                      </colgroup>
                       <thead>
                         <tr>
                           <th>Clock In</th>

@@ -73,7 +73,12 @@ export function TimesheetHistoryPage() {
             </span>
           </div>
           <div className="tablewrap">
-            <table>
+            <table className="entries-table entries-table-compact">
+              <colgroup>
+                <col style={{ width: '55%' }} />
+                <col style={{ width: '15%' }} />
+                <col />
+              </colgroup>
               <thead>
                 <tr>
                   <th>Time</th>
