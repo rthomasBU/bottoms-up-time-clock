@@ -39,6 +39,12 @@ export default defineConfig({
             handler: 'NetworkOnly',
           },
         ],
+        // 'push'/'notificationclick' listeners for the overtime alert
+        // (public/push-sw.js), spliced into the generated service worker
+        // via importScripts - kept as a separate plain file instead of
+        // switching this whole PWA to the injectManifest strategy, so
+        // precaching/the Supabase NetworkOnly rule above are untouched.
+        importScripts: ['/push-sw.js'],
       },
     }),
   ],

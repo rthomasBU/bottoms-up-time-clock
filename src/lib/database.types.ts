@@ -62,6 +62,7 @@ export interface Database {
           clock_out_lat: number | null;
           clock_out_lng: number | null;
           clock_out_accuracy_m: number | null;
+          last_overtime_notified_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -79,6 +80,7 @@ export interface Database {
           clock_out_lat?: number | null;
           clock_out_lng?: number | null;
           clock_out_accuracy_m?: number | null;
+          last_overtime_notified_at?: string | null;
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['time_entries']['Insert']>;
@@ -145,6 +147,34 @@ export interface Database {
         };
         Update: Partial<Database['public']['Tables']['holidays']['Insert']>;
         Relationships: [];
+      };
+      push_subscriptions: {
+        Row: {
+          id: string;
+          employee_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth_key: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          employee_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth_key: string;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['push_subscriptions']['Insert']>;
+        Relationships: [
+          {
+            foreignKeyName: 'push_subscriptions_employee_id_fkey';
+            columns: ['employee_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
     };
     Views: {

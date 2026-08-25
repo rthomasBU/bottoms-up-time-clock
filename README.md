@@ -56,6 +56,16 @@ Every active employee's `pto_balance_hours` accrues automatically via a daily `p
 
 Only PTO requests go through admin approval (`pto_requests.status` + `review_pto_request`). Time entries do not - employees clock in/out live only, with no self-service add or edit (removed in `0008_remove_employee_manual_time_entry.sql`; a DB trigger blocks any non-admin change to `clock_in` on a `self`-sourced entry, on top of the narrower RLS policies, so this holds even against a direct API call). Admins can add or correct any employee's entries at any time from **Timesheets** (`/admin/timesheets`), with a required reason for the record.
 
+## Hourly overtime push alerts
+
+Hourly employees can opt in (per-device, "Overtime Alerts" card on `/`) to a push notification - "Are you authorized to be working overtime?" - the first time they're clocked in past 8 hours on a single punch, repeating every 2 hours after that for as long as they stay clocked in. Salaried employees never get this (`profiles.pay_type === 'hourly'` filter, checked server-side by the sender, not just hidden client-side).
+
+This is the one part of the app that isn't just a SQL migration - Web Push needs a server to sign and send each message (VAPID), which Postgres can't do alone. The pieces:
+- `push_subscriptions` table + `time_entries.last_overtime_notified_at` (`0010_overtime_alerts.sql`) - no secrets, safe to run like any other migration.
+- `supabase/functions/send-overtime-alerts` - a Deno Edge Function, checked every 15 minutes by pg_cron + pg_net, that finds hourly employees due for an alert and sends via `npm:web-push`. Deployed and configured separately - see the one-time setup checklist (not a SQL-editor paste).
+- `src/lib/push.ts` / `src/components/OvertimeAlertsToggle.tsx` - client-side subscribe/unsubscribe, one row per device.
+- `public/push-sw.js` - the service worker's `push`/`notificationclick` handlers, spliced into the generated Workbox service worker via `workbox.importScripts` (`vite.config.ts`) rather than switching the whole PWA to a hand-written service worker.
+
 ## Clock-in/out geolocation
 
 Every live clock in/out captures a best-effort device location via the browser Geolocation API (`src/lib/geolocation.ts`), saved to `clock_in_lat/lng/accuracy_m` and `clock_out_lat/lng/accuracy_m` (`0009_time_entry_geolocation.sql`). It's always optional - a denied, unsupported, or slow (>6s) location never blocks the punch, it just saves as null. Admins see a "map" link next to any clock in/out that has a location on **Timesheets** (`/admin/timesheets`); employees don't see it on their own `/timesheet`. Manual admin entries never carry a location (they aren't a real device capture).

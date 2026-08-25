@@ -385,6 +385,15 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# send-overtime-alerts is only ever called by pg_cron, never by a logged-in
+# user, so there's no Supabase Auth JWT to verify - it checks its own
+# CRON_SECRET header instead (see supabase/functions/send-overtime-alerts).
+# If deploying via the Dashboard instead of the CLI, flip the matching
+# "Enforce JWT Verification" toggle off in that function's settings there -
+# this file only takes effect on `supabase functions deploy`.
+[functions.send-overtime-alerts]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

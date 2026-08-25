@@ -99,6 +99,15 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] Verified live: with all current test data inside the last 7 days, all three cards correctly show the same 14.61 total. Checked at mobile width (375px) - cards wrap 2-then-1 with no page-level horizontal scroll (`document.documentElement.scrollWidth === window.innerWidth`).
 - [ ] Not yet verified with data older than 7 days: confirm Last 30/60 Days grows relative to Last 7 Days once an entry outside the most recent week exists.
 
+## Hourly overtime push alerts (0010_overtime_alerts.sql + send-overtime-alerts Edge Function)
+
+- [x] `npm run typecheck` / `npm run lint` / `npm run build` all clean. Confirmed the generated `dist/sw.js` correctly injects `importScripts("/push-sw.js")` ahead of precaching, and that `public/push-sw.js` is reachable and unmodified at `/push-sw.js`.
+- [x] Verified via `npm run preview` (dev mode has PWA disabled, same caveat as the rest of Phase 6): service worker registers and activates with no console errors either origin (5173 dev session, 5174 preview build).
+- [x] `Overtime Alerts` card only renders for hourly employees (`profile.pay_type === 'hourly'`) on `/` - confirmed absent from a salaried view's Clock tab conceptually (same render gate as the card itself; not re-screenshotted since the gate is a one-line condition).
+- [x] With the test browser's notification permission at its default "denied", the card correctly shows the blocked-permission message and no button, instead of a broken/silently-failing toggle.
+- [ ] **Not yet tested end-to-end** (needs a real device/browser with notification permission grantable, which this sandboxed test browser can't do): clicking "Enable on This Device" actually completes a subscription and saves a `push_subscriptions` row; the Edge Function actually delivers a push after 8 hours clocked in and repeats every 2 hours after; an expired/revoked subscription gets cleaned up on a 404/410 send failure.
+- [ ] **Deployment not yet done by the user** - this feature needs manual setup beyond a SQL paste (Edge Function deploy + secrets + cron job); see the checklist given in chat. Nothing sends until that's done.
+
 ## Salaried employees can now use the Clock tab ✅ verified
 
 - [x] Removed the pay-type gate on `/` (`ClockPage.tsx`) - previously salaried employees saw "You're on salary, so there's no clock to punch" instead of the clock button. Now every employee, hourly or salaried, gets the same Clock In/Out button, status card, and This Week progress. This was purely a UI restriction - no RLS or DB constraint on `time_entries` ever referenced `pay_type`, so nothing needed to change at the database layer.
