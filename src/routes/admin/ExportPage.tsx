@@ -1,26 +1,30 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAdminTimeEntries, type EntryFilters } from '../../hooks/useAdminTimeEntries';
 import { useAdminTravelDays } from '../../hooks/useAdminTravelDays';
 import { useTeamPto } from '../../hooks/useTeamPto';
 import { useEmployees } from '../../hooks/useEmployees';
-import { getPayPeriodRange, toDateKey } from '../../lib/payroll';
+import { getPayPeriodRangeByOffset, toDateKey } from '../../lib/payroll';
 import { buildPayrollExportRows, downloadPayrollExportXlsx, PAYROLL_EXPORT_HEADERS } from '../../lib/payrollExport';
 
-function defaultExportFilters(): EntryFilters {
-  // Defaults to the current pay period (always whole Monday-Sunday weeks,
-  // per getPayPeriodRange) rather than a rolling "last 14 days" - the GRIN
-  // payroll export's overtime math is only exact when the exported range
-  // covers whole weeks, and a payroll run is naturally period-based anyway.
-  const { start, end } = getPayPeriodRange(new Date());
-  return {
-    from: toDateKey(start),
-    to: toDateKey(end),
-    employeeId: 'all',
-  };
+// Next period, current, and the past 11 (about 6 months back) - newest
+// first. Payroll is always run for a whole period (the GRIN export's
+// overtime math depends on that), so picking one from a list rather than
+// two free-form dates makes it impossible to select a partial period.
+const PERIOD_OFFSETS = Array.from({ length: 13 }, (_, i) => 1 - i);
+
+function periodLabel(start: Date, end: Date, offset: number): string {
+  const startLabel = start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const endLabel = end.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  return `${startLabel} - ${endLabel}${offset === 0 ? ' (Current)' : ''}`;
 }
 
 export function ExportPage() {
-  const [filters, setFilters] = useState<EntryFilters>(defaultExportFilters());
+  const [periodOffset, setPeriodOffset] = useState(0);
+  const [employeeId, setEmployeeId] = useState('all');
+  const filters = useMemo<EntryFilters>(() => {
+    const { start, end } = getPayPeriodRangeByOffset(new Date(), periodOffset);
+    return { from: toDateKey(start), to: toDateKey(end), employeeId };
+  }, [periodOffset, employeeId]);
   const { entries, loading, error } = useAdminTimeEntries(filters);
   const { travelDays, loading: travelDaysLoading, error: travelDaysError } = useAdminTravelDays(filters);
   const { requests: ptoRequests } = useTeamPto(filters.from, filters.to);
@@ -53,16 +57,21 @@ export function ExportPage() {
 
       <div className="filter-row no-print">
         <div className="fcol">
-          <label htmlFor="from">From</label>
-          <input id="from" type="date" value={filters.from} onChange={(e) => setFilters({ ...filters, from: e.target.value })} />
-        </div>
-        <div className="fcol">
-          <label htmlFor="to">To</label>
-          <input id="to" type="date" value={filters.to} onChange={(e) => setFilters({ ...filters, to: e.target.value })} />
+          <label htmlFor="period">Pay Period</label>
+          <select id="period" value={periodOffset} onChange={(e) => setPeriodOffset(Number(e.target.value))}>
+            {PERIOD_OFFSETS.map((offset) => {
+              const { start, end } = getPayPeriodRangeByOffset(new Date(), offset);
+              return (
+                <option key={offset} value={offset}>
+                  {periodLabel(start, end, offset)}
+                </option>
+              );
+            })}
+          </select>
         </div>
         <div className="fcol">
           <label htmlFor="employee">Employee</label>
-          <select id="employee" value={filters.employeeId} onChange={(e) => setFilters({ ...filters, employeeId: e.target.value })}>
+          <select id="employee" value={employeeId} onChange={(e) => setEmployeeId(e.target.value)}>
             <option value="all">All</option>
             {employees.map((emp) => (
               <option key={emp.id} value={emp.id}>
@@ -78,7 +87,7 @@ export function ExportPage() {
         <h2>Payroll Import (GRIN)</h2>
       </div>
       <p className="form-hint">
-        One row per employee for the selected range, matching GRIN's own ExcelTimeClock import format (EmployeeID,
+        One row per employee for the selected pay period, matching GRIN's own ExcelTimeClock import format (EmployeeID,
         hours split into regular/overtime, PTO, per diem). Bonus, Tech Support, and Holiday units aren't tracked here
         and always export blank.
         {missingPayrollId > 0 &&

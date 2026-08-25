@@ -98,6 +98,14 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] No console errors on a fresh tab (a second, pre-existing tab's console history had stale Vite HMR errors referencing removed code from earlier in the session - confirmed those don't reproduce on a fresh navigation, per the established stale-HMR pattern).
 - [x] `npm run typecheck` / `npm run lint` / `npm run build` all clean.
 
+## Export date range replaced with a Pay Period picker ✅ verified live
+
+- [x] Replaced the free-form From/To date inputs on `/admin/export` with a single "Pay Period" dropdown (`getPayPeriodRangeByOffset` in `src/lib/payroll.ts`) - 13 options, next period through 11 periods back (~6 months), newest first, current period labeled "(Current)" and selected by default. Picking a whole period rather than arbitrary dates makes it impossible to select a partial period, which the GRIN export's weekly overtime split already depended on being true (previously just a default, not enforced).
+- [x] Verified live: default selection shows "Aug 24 - Sep 6, 2026 (Current)"; switching to "Aug 10 - Aug 23, 2026" correctly recomputed the preview table with different values for that period (Ryan Thomas 10.40 hrs/8.00 PTO/no per diem -> 12.50 hrs/no PTO/4 per diem), confirming the filters and preview both actually respond to the selection rather than only the label changing.
+- [x] Employee filter dropdown is unchanged, still independent of the period selection.
+- [x] No console errors on a fresh tab, no horizontal scroll at mobile width (375px).
+- [x] `npm run typecheck` / `npm run lint` / `npm run build` all clean.
+
 ## Payroll export matching GRIN's ExcelTimeClock format (0012_payroll_id.sql) ✅ verified live
 
 - [x] `npm run typecheck` / `npm run lint` / `npm run build` all clean. `npm audit` clean (0 vulnerabilities) after installing `xlsx` from SheetJS's own CDN tarball instead of the vulnerable npm-registry release.

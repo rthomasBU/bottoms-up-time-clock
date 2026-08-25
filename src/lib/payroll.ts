@@ -54,6 +54,24 @@ export function getPayPeriodRange(date: Date): { start: Date; end: Date } {
   return { start, end };
 }
 
+/** The pay period `offsetPeriods` periods away from the one containing
+ *  `referenceDate` (0 = current, -1 = the previous period, 1 = the next
+ *  one, etc.) - same 14-day periods as getPayPeriodRange, just shifted by
+ *  whole periods. Used to build a "pick a pay period" list without doing
+ *  date arithmetic in the UI. */
+export function getPayPeriodRangeByOffset(referenceDate: Date, offsetPeriods: number): { start: Date; end: Date } {
+  const { end: currentPeriodEnd } = getPayPeriodRange(referenceDate);
+  const currentEndDateOnly = new Date(
+    currentPeriodEnd.getFullYear(),
+    currentPeriodEnd.getMonth(),
+    currentPeriodEnd.getDate(),
+  );
+  const end = addDays(currentEndDateOnly, offsetPeriods * PERIOD_LENGTH_DAYS);
+  const start = addDays(end, -(PERIOD_LENGTH_DAYS - 1));
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
+}
+
 /** yyyy-mm-dd, for comparing against a calendar cell's date. */
 export function toDateKey(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0');
