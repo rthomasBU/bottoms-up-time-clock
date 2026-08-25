@@ -64,6 +64,13 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] Fixed: the calendar's `min-width: 490px` grid was bleeding out to cause real page-level horizontal scroll at 390px width, not just its own internal scroll - fixed with `width: 100%` on `.calendar`/`.calendar-scroll` so the `overflow-x: auto` wrapper has a definite width to actually clip against. Re-verified clean after the fix (`document.documentElement.scrollWidth === window.innerWidth`, calendar's own scroll still works).
 - [x] Confirmed with real second/third employee accounts in production: approved PTO from other employees (e.g. "PTO - Test Employee", "PTO - Brian Pitre") shows correctly on the shared calendar with their names.
 
+## Travel moved to its own tab ✅ verified live
+
+- [x] New `/travel` route + "Travel" nav link (between Calendar and PTO), rendering a dedicated `TravelPage.tsx` (h1 + sub, matching Calendar/PTO's page pattern) wrapping the same `TravelDayLogger` component - removed from the Clock tab entirely, no longer sharing space with Overtime Alerts there.
+- [x] Trimmed `TravelDayLogger`'s own internal card label/hint since they're now redundant with the page's h1/sub (matches the convention already used by `PtoPage`, where the request form doesn't repeat its own heading either).
+- [x] Verified live: Clock tab now goes straight from "This Week" to "Overtime Alerts" with no Travel card in between; `/travel` shows the full logger (form + existing logged days) under its own heading, no duplicate headings.
+- [x] No console errors on a fresh tab, no horizontal scroll at mobile width (375px), form and list both render cleanly stacked at 375px.
+
 ## Export "Hours" section aggregated to one row per employee ✅ verified live
 
 - [x] `/admin/export`'s Hours section (section 2) now shows `Employee | Total Hours` - one row per visible employee (still lists everyone, 0.00 for no hours in range, matching the roster-always-shown pattern elsewhere), instead of one row per individual clock in/out entry with Date/Clock In/Clock Out/Type columns. Both the on-screen table and the CSV export changed the same way; "Export PDF (Print)" is unaffected code-wise, it just prints whatever's now on screen.

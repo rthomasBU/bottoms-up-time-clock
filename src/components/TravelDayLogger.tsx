@@ -6,11 +6,11 @@ import { toDateKey } from '../lib/payroll';
 
 const BACKDATE_WINDOW_DAYS = 14;
 
-/** Per diem travel logging - available to every employee regardless of
- *  pay_type (travel per diem isn't an hourly-vs-salaried thing, unlike the
- *  overtime alert). Logs every date in a start-end range at once (each date
- *  still becomes its own row - see useTravelDays); admins see everyone's on
- *  the Export page. */
+/** Per diem travel logging, rendered on its own /travel tab - available to
+ *  every employee regardless of pay_type (travel per diem isn't an
+ *  hourly-vs-salaried thing, unlike the overtime alert). Logs every date in
+ *  a start-end range at once (each date still becomes its own row - see
+ *  useTravelDays); admins see everyone's on the Export page. */
 export function TravelDayLogger() {
   const { profile } = useAuth();
   const { travelDays, loading, error, logTravelDays, deleteTravelDay } = useTravelDays(profile?.id);
@@ -68,9 +68,6 @@ export function TravelDayLogger() {
 
   return (
     <div className="card travel-day-logger">
-      <div className="label">Travel (Per Diem)</div>
-      <p className="form-hint">Log the days you traveled for work so payroll can add per diem pay for them.</p>
-
       <form className="entry-form" onSubmit={(e) => void handleSubmit(e)}>
         <label htmlFor="travel-start">Start date</label>
         <input

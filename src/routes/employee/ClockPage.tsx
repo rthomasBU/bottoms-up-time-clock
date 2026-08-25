@@ -4,7 +4,6 @@ import { useClockStatus } from '../../hooks/useClockStatus';
 import { useTimesheet } from '../../hooks/useTimesheet';
 import { elapsedSince, formatTime, hoursBetween, getCurrentWeekRange } from '../../lib/time';
 import { OvertimeAlertsToggle } from '../../components/OvertimeAlertsToggle';
-import { TravelDayLogger } from '../../components/TravelDayLogger';
 
 const WEEKLY_TARGET_HOURS = 40;
 
@@ -77,8 +76,6 @@ export function ClockPage() {
             </div>
             <progress value={Math.min(weekHours, WEEKLY_TARGET_HOURS)} max={WEEKLY_TARGET_HOURS} />
           </div>
-
-          <TravelDayLogger />
 
           {profile?.pay_type === 'hourly' && <OvertimeAlertsToggle />}
         </>
