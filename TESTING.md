@@ -93,11 +93,11 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [ ] **RLS check (not yet run)**: as a non-admin, `update time_entries set clock_in = clock_in - interval '1 hour' where id = <your own open entry>` must be rejected by the `time_entries_prevent_self_backdating` trigger.
 - [ ] **RLS check (not yet run)**: as a non-admin, clocking out via `update ... set clock_out = now(), edit_reason = 'test' where id = <your own open entry>` must be rejected (edit_reason no longer allowed on the self clock-out path).
 
-## Employee timesheet grouped hours by 7/30/60 days ✅ verified
+## Employee timesheet cards: Today / Current Pay Period / Last 30 Days ✅ verified
 
-- [x] `/timesheet` replaced the single "Period Total" card with three `.kpis` cards - Last 7 Days, Last 30 Days, Last 60 Days - each a cumulative running total (not exclusive buckets), computed client-side off the same 60-day fetch `useTimesheet` already does, no extra query.
-- [x] Verified live: with all current test data inside the last 7 days, all three cards correctly show the same 14.61 total. Checked at mobile width (375px) - cards wrap 2-then-1 with no page-level horizontal scroll (`document.documentElement.scrollWidth === window.innerWidth`).
-- [ ] Not yet verified with data older than 7 days: confirm Last 30/60 Days grows relative to Last 7 Days once an entry outside the most recent week exists.
+- [x] `/timesheet` shows three `.kpis` cards - Today, Current Pay Period, Last 30 Days (superseding the earlier Last 7/30/60 Days version) - computed client-side off the same 60-day fetch `useTimesheet` already does, no extra query. "Current Pay Period" uses the new `getCurrentPayPeriodRange` in `src/lib/payroll.ts`, sharing the same anchor/period-length constants as the payday math so the two stay consistent.
+- [x] Verified live with real mixed-period test data: Today correctly summed only today's closed entries (8.22, excluding the still-open "1:16 AM - now" row); Current Pay Period correctly summed today + the rest of the current 14-day period (10.40) while excluding two entries from the prior period (Aug 20/22); Last 30 Days correctly summed everything including those prior-period entries (22.90). Hand-verified the arithmetic against the visible row list.
+- [x] Checked at mobile width (375px) - cards wrap with no page-level horizontal scroll (`document.documentElement.scrollWidth === window.innerWidth`), no console errors on a fresh tab.
 
 ## Hourly overtime push alerts (0010_overtime_alerts.sql + send-overtime-alerts Edge Function) ✅ verified live in production
 

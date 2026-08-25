@@ -37,6 +37,21 @@ export function getPaydaysInRange(start: Date, end: Date): Date[] {
   return paydays;
 }
 
+/** Start (00:00:00) through end (23:59:59.999) of the 2-week pay period
+ *  containing `now`, using the same period-end anchor as getPaydaysInRange -
+ *  periods end Sundays, anchored to 2026-08-23, so e.g. 2026-08-24 through
+ *  2026-09-06 is one period. */
+export function getCurrentPayPeriodRange(now: Date): { start: Date; end: Date } {
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const daysFromAnchor = Math.round((nowDateOnly.getTime() - PAY_PERIOD_END_ANCHOR.getTime()) / msPerDay);
+  const periodsFromAnchor = Math.ceil(daysFromAnchor / PERIOD_LENGTH_DAYS);
+  const end = addDays(PAY_PERIOD_END_ANCHOR, periodsFromAnchor * PERIOD_LENGTH_DAYS);
+  const start = addDays(end, -(PERIOD_LENGTH_DAYS - 1));
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
+}
+
 /** yyyy-mm-dd, for comparing against a calendar cell's date. */
 export function toDateKey(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0');

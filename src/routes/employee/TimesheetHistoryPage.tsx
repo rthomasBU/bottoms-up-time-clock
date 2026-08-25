@@ -1,23 +1,35 @@
 import { useAuth } from '../../hooks/useAuth';
 import { useTimesheet } from '../../hooks/useTimesheet';
 import { hoursBetween, formatTime, formatDate } from '../../lib/time';
+import { getCurrentPayPeriodRange } from '../../lib/payroll';
 import type { Database } from '../../lib/database.types';
 
 type TimeEntry = Database['public']['Tables']['time_entries']['Row'];
+
+/** Sum of closed entries' hours with clock_in inside [start, end]. */
+function hoursInRange(entries: TimeEntry[], start: Date, end: Date): number {
+  return entries.reduce((sum, e) => {
+    if (!e.clock_out) return sum;
+    const clockIn = new Date(e.clock_in);
+    return clockIn >= start && clockIn <= end ? sum + hoursBetween(e.clock_in, e.clock_out) : sum;
+  }, 0);
+}
 
 /** Sum of closed entries' hours with clock_in in the last `days` days. */
 function hoursInLastDays(entries: TimeEntry[], days: number): number {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - days);
-  return entries.reduce(
-    (sum, e) => (e.clock_out && new Date(e.clock_in) >= cutoff ? sum + hoursBetween(e.clock_in, e.clock_out) : sum),
-    0,
-  );
+  return hoursInRange(entries, cutoff, new Date());
 }
 
 export function TimesheetHistoryPage() {
   const { profile } = useAuth();
   const { entries, loading, error } = useTimesheet(profile?.id);
+
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const endOfToday = new Date(startOfToday.getTime() + 24 * 60 * 60 * 1000 - 1);
+  const payPeriod = getCurrentPayPeriodRange(now);
 
   return (
     <div>
@@ -28,18 +40,18 @@ export function TimesheetHistoryPage() {
 
       <div className="kpis">
         <div className="card kpi">
-          <div className="label">Last 7 Days</div>
-          <div className="big">{hoursInLastDays(entries, 7).toFixed(2)}</div>
+          <div className="label">Today</div>
+          <div className="big">{hoursInRange(entries, startOfToday, endOfToday).toFixed(2)}</div>
+          <div className="unit">hours</div>
+        </div>
+        <div className="card kpi">
+          <div className="label">Current Pay Period</div>
+          <div className="big">{hoursInRange(entries, payPeriod.start, payPeriod.end).toFixed(2)}</div>
           <div className="unit">hours</div>
         </div>
         <div className="card kpi">
           <div className="label">Last 30 Days</div>
           <div className="big">{hoursInLastDays(entries, 30).toFixed(2)}</div>
-          <div className="unit">hours</div>
-        </div>
-        <div className="card kpi">
-          <div className="label">Last 60 Days</div>
-          <div className="big">{hoursInLastDays(entries, 60).toFixed(2)}</div>
           <div className="unit">hours</div>
         </div>
       </div>
