@@ -64,6 +64,12 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] Fixed: the calendar's `min-width: 490px` grid was bleeding out to cause real page-level horizontal scroll at 390px width, not just its own internal scroll - fixed with `width: 100%` on `.calendar`/`.calendar-scroll` so the `overflow-x: auto` wrapper has a definite width to actually clip against. Re-verified clean after the fix (`document.documentElement.scrollWidth === window.innerWidth`, calendar's own scroll still works).
 - [x] Confirmed with real second/third employee accounts in production: approved PTO from other employees (e.g. "PTO - Test Employee", "PTO - Brian Pitre") shows correctly on the shared calendar with their names.
 
+## Export "Hours" section aggregated to one row per employee ✅ verified live
+
+- [x] `/admin/export`'s Hours section (section 2) now shows `Employee | Total Hours` - one row per visible employee (still lists everyone, 0.00 for no hours in range, matching the roster-always-shown pattern elsewhere), instead of one row per individual clock in/out entry with Date/Clock In/Clock Out/Type columns. Both the on-screen table and the CSV export changed the same way; "Export PDF (Print)" is unaffected code-wise, it just prints whatever's now on screen.
+- [x] Verified live: 10 employees listed, Ryan Thomas 10.40 + Chris Wiles 0.08 = 10.48, matching the summary hint above the table exactly. Confirmed the CSV export's actual content (intercepted the Blob passed to `URL.createObjectURL` and read its text directly, since the download helper revokes the blob URL synchronously right after the click - a plain post-click fetch was too late) - `employee,hours` header, same 10 rows, same values as the table.
+- [x] No console errors on a fresh tab, no horizontal scroll at mobile width (375px).
+
 ## Payroll export matching GRIN's ExcelTimeClock format (0012_payroll_id.sql) ✅ verified live
 
 - [x] `npm run typecheck` / `npm run lint` / `npm run build` all clean. `npm audit` clean (0 vulnerabilities) after installing `xlsx` from SheetJS's own CDN tarball instead of the vulnerable npm-registry release.

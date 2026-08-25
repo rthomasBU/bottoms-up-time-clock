@@ -1,12 +1,36 @@
 import { useState } from 'react';
-import { useAdminTimeEntries, type EntryFilters } from '../../hooks/useAdminTimeEntries';
+import { useAdminTimeEntries, type EntryFilters, type AdminTimeEntryRow } from '../../hooks/useAdminTimeEntries';
 import { useAdminTravelDays } from '../../hooks/useAdminTravelDays';
 import { useTeamPto } from '../../hooks/useTeamPto';
 import { useEmployees } from '../../hooks/useEmployees';
-import { hoursBetween, formatDateTime, formatDate } from '../../lib/time';
+import { hoursBetween, formatDate } from '../../lib/time';
 import { getPayPeriodRange, toDateKey } from '../../lib/payroll';
 import { toCsv, downloadCsv } from '../../lib/csv';
 import { buildPayrollExportRows, downloadPayrollExportXlsx } from '../../lib/payrollExport';
+import type { Database } from '../../lib/database.types';
+
+type Profile = Database['public']['Tables']['profiles']['Row'];
+
+interface EmployeeHoursTotal {
+  employeeId: string;
+  fullName: string;
+  totalHours: number;
+}
+
+/** One row per employee (every employee passed in, even ones with zero
+ *  closed hours in range) - matches the "always list the full roster"
+ *  pattern used by the GRIN export and Timesheets Browser. */
+function buildEmployeeHoursTotals(employees: Profile[], closedEntries: AdminTimeEntryRow[]): EmployeeHoursTotal[] {
+  const totalsByEmployee = new Map<string, number>();
+  for (const e of closedEntries) {
+    totalsByEmployee.set(e.employee_id, (totalsByEmployee.get(e.employee_id) ?? 0) + hoursBetween(e.clock_in, e.clock_out!));
+  }
+  return employees.map((emp) => ({
+    employeeId: emp.id,
+    fullName: emp.full_name,
+    totalHours: totalsByEmployee.get(emp.id) ?? 0,
+  }));
+}
 
 function defaultExportFilters(): EntryFilters {
   // Defaults to the current pay period (always whole Monday-Sunday weeks,
@@ -34,6 +58,7 @@ export function ExportPage() {
   const openCount = entries.length - closedEntries.length;
   const visibleEmployees = filters.employeeId === 'all' ? employees : employees.filter((emp) => emp.id === filters.employeeId);
   const missingPayrollId = visibleEmployees.filter((emp) => !emp.payroll_id).length;
+  const employeeHoursTotals = buildEmployeeHoursTotals(visibleEmployees, closedEntries);
 
   async function handleExportPayroll() {
     setPayrollExporting(true);
@@ -47,13 +72,9 @@ export function ExportPage() {
   }
 
   function handleExportCsv() {
-    const rows = closedEntries.map((e) => ({
-      employee: e.profiles?.full_name ?? 'Unknown',
-      date: formatDate(e.clock_in),
-      clock_in: formatDateTime(e.clock_in),
-      clock_out: formatDateTime(e.clock_out!),
-      hours: hoursBetween(e.clock_in, e.clock_out!).toFixed(2),
-      type: e.edited_by ? 'Manual' : 'Live',
+    const rows = employeeHoursTotals.map((t) => ({
+      employee: t.fullName,
+      hours: t.totalHours.toFixed(2),
     }));
     const csv = toCsv(rows);
     downloadCsv(`timesheet_${filters.from}_to_${filters.to}.csv`, csv);
@@ -143,24 +164,14 @@ export function ExportPage() {
           <thead>
             <tr>
               <th>Employee</th>
-              <th>Date</th>
-              <th>Clock In</th>
-              <th>Clock Out</th>
-              <th>Hours</th>
-              <th>Type</th>
+              <th>Total Hours</th>
             </tr>
           </thead>
           <tbody>
-            {closedEntries.map((e) => (
-              <tr key={e.id} className="row">
-                <td>{e.profiles?.full_name ?? 'Unknown'}</td>
-                <td>{formatDate(e.clock_in)}</td>
-                <td>{formatDateTime(e.clock_in)}</td>
-                <td>{formatDateTime(e.clock_out!)}</td>
-                <td className="num">{hoursBetween(e.clock_in, e.clock_out!).toFixed(2)}</td>
-                <td>
-                  <span className={`tag ${e.edited_by ? 'muted' : 'ok'}`}>{e.edited_by ? 'Manual' : 'Live'}</span>
-                </td>
+            {employeeHoursTotals.map((t) => (
+              <tr key={t.employeeId} className="row">
+                <td>{t.fullName}</td>
+                <td className="num">{t.totalHours.toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
