@@ -64,14 +64,18 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] Fixed: the calendar's `min-width: 490px` grid was bleeding out to cause real page-level horizontal scroll at 390px width, not just its own internal scroll - fixed with `width: 100%` on `.calendar`/`.calendar-scroll` so the `overflow-x: auto` wrapper has a definite width to actually clip against. Re-verified clean after the fix (`document.documentElement.scrollWidth === window.innerWidth`, calendar's own scroll still works).
 - [x] Confirmed with real second/third employee accounts in production: approved PTO from other employees (e.g. "PTO - Test Employee", "PTO - Brian Pitre") shows correctly on the shared calendar with their names.
 
-## Travel day (per diem) logging (0011_travel_days.sql)
+## Travel day (per diem) logging (0011_travel_days.sql) ✅ verified live
 
 - [x] `npm run typecheck` / `npm run lint` / `npm run build` all clean.
 - [x] New "Travel Day (Per Diem)" card on `/` (Clock tab), for every employee regardless of pay type - date picker (default today, capped to the last 14 days, no future dates), optional notes, "Log Travel Day" button, and a list of the employee's own recently logged days with a "Remove" link (only shown within the 14-day self-delete window).
-- [x] Verified the card degrades gracefully before the migration is applied: renders fully, shows a clear "Could not find the table 'public.travel_days'" error under the form instead of crashing the page - confirms no other part of the Clock tab (clock in/out, This Week, Overtime Alerts) is affected by this new card failing.
-- [ ] **Migration not yet applied to the live project** - nothing will actually save until `0011_travel_days.sql` is run. See the checklist given in chat.
-- [ ] Not yet verified end-to-end against live data (blocked on the migration above): logging a day, seeing it in the list, removing it, the unique-per-employee-per-date constraint surfacing a clear error on a duplicate, and the RLS backdating/future-date limits actually being enforced server-side (UI already blocks both via the date input's min/max).
-- [ ] Not yet verified: the new **Export** page "Travel Days (Per Diem)" section (employee/date/notes/logged-by table + separate CSV export) - same migration blocker.
+- [x] Verified the card degraded gracefully *before* the migration was applied (clear "table not found" error under the form, rest of the Clock tab unaffected) - confirmed the fallback actually works, not just assumed.
+- [x] **Migration applied** - verified end-to-end against live data:
+  - Logged a travel day for today with a note ("Drove to the Cincinnati install job") - appeared immediately in the list below the form.
+  - Logging a second travel day for the same date correctly failed with the friendly "You already logged a travel day for that date." message (the `unique (employee_id, travel_date)` constraint surfacing through the mapped 23505 error code, not a raw Postgres error).
+  - Clicked Remove - the entry disappeared and the list correctly returned to empty.
+  - Admin **Export** page (`/admin/export`) "Travel Days (Per Diem)" section correctly showed the logged day (employee, date, note, "Employee" as logged-by) with its own "Export Travel Days CSV" button, only one primary orange button on the page (the existing hours "Export CSV").
+  - No console errors on a fresh tab.
+- [ ] Not yet verified: the RLS backdating/future-date window enforcement server-side (UI already blocks both via the date input's min/max, but haven't independently confirmed via a raw API call bypassing the UI, same category of not-yet-independently-verified RLS edge case as a few others in this file).
 
 ## Payday tag moved next to the date number ✅ verified
 
