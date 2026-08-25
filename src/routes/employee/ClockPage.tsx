@@ -78,9 +78,9 @@ export function ClockPage() {
             <progress value={Math.min(weekHours, WEEKLY_TARGET_HOURS)} max={WEEKLY_TARGET_HOURS} />
           </div>
 
-          {profile?.pay_type === 'hourly' && <OvertimeAlertsToggle />}
-
           <TravelDayLogger />
+
+          {profile?.pay_type === 'hourly' && <OvertimeAlertsToggle />}
         </>
       )}
       {error && <p className="form-error">{error}</p>}

@@ -64,6 +64,15 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] Fixed: the calendar's `min-width: 490px` grid was bleeding out to cause real page-level horizontal scroll at 390px width, not just its own internal scroll - fixed with `width: 100%` on `.calendar`/`.calendar-scroll` so the `overflow-x: auto` wrapper has a definite width to actually clip against. Re-verified clean after the fix (`document.documentElement.scrollWidth === window.innerWidth`, calendar's own scroll still works).
 - [x] Confirmed with real second/third employee accounts in production: approved PTO from other employees (e.g. "PTO - Test Employee", "PTO - Brian Pitre") shows correctly on the shared calendar with their names.
 
+## Travel renamed + date-range logging + Overtime Alerts moved to the bottom ✅ verified live
+
+- [x] Clock tab card order is now Status → Clock button → This Week → Travel (Per Diem) → Overtime Alerts (was Overtime Alerts before Travel) - a pure JSX reorder in `ClockPage.tsx`, no logic change.
+- [x] Renamed "Travel Day (Per Diem)" → "Travel (Per Diem)" and "Log Travel Day" → "Log Travel" throughout the employee-facing card (the admin Export page's "Travel Days (Per Diem)" table heading is unchanged - it's a list of individual day-rows, so the plural still fits there).
+- [x] Replaced the single date field with Start date / End date - `useTravelDays.logTravelDays` now builds every date in that inclusive range and `upsert`s them all in one call with `ignoreDuplicates: true` (a pure `INSERT ... ON CONFLICT DO NOTHING`, so only the existing self-insert RLS policy applies, no migration needed), reporting back how many were newly logged vs already existed rather than failing the whole range on one collision.
+- [x] **Verified live end-to-end**: logged a 5-day range (Aug 21-25) in one submission - "Logged 5 travel days.", all 5 appeared in the list correctly with notes. Resubmitting the exact same range correctly said "Every date in that range was already logged." (0 logged, treated as an error, not a false success). A partially-overlapping range (Aug 19-21, where 21 was already logged) correctly said "Logged 2 travel days (1 already logged, skipped)." - the skip-count math is right.
+- [x] Confirmed all range-logged rows showed up correctly on the admin Export page's Travel Days table and CSV export.
+- [x] Cleaned up all test data afterward. No console errors throughout.
+
 ## Travel day (per diem) logging (0011_travel_days.sql) ✅ verified live
 
 - [x] `npm run typecheck` / `npm run lint` / `npm run build` all clean.
