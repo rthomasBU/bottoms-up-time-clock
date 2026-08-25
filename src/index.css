@@ -951,6 +951,12 @@ progress {
   outline: 2px solid var(--orange);
   outline-offset: -2px;
 }
+.calendar-day-top {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
 .calendar-day-number {
   font-family: var(--heading);
   font-weight: 600;
@@ -961,6 +967,9 @@ progress {
   padding: 2px 6px;
   white-space: normal;
   width: fit-content;
+}
+.calendar-payday {
+  white-space: nowrap;
 }
 .calendar-more {
   font-style: italic;

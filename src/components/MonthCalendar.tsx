@@ -5,6 +5,10 @@ export interface CalendarEvent {
   dateKey: string; // yyyy-mm-dd
   label: string;
   tagClass: 'ok' | 'muted' | 'hot';
+  /** Paydays render inline next to the date number instead of stacked with
+   *  the day's other events, since they're a single deterministic event
+   *  worth seeing at a glance without opening the day. */
+  isPayday?: boolean;
 }
 
 interface MonthCalendarProps {
@@ -68,9 +72,11 @@ export function MonthCalendar({ month, onPrevMonth, onNextMonth, events }: Month
           {days.map(({ date, inCurrentMonth }) => {
             const dateKey = toDateKey(date);
             const dayEvents = eventsByDay.get(dateKey) ?? [];
+            const paydayEvent = dayEvents.find((e) => e.isPayday);
+            const otherEvents = dayEvents.filter((e) => !e.isPayday);
             const isToday = dateKey === todayKey;
-            const visible = dayEvents.slice(0, MAX_VISIBLE_EVENTS);
-            const hiddenCount = dayEvents.length - visible.length;
+            const visible = otherEvents.slice(0, MAX_VISIBLE_EVENTS);
+            const hiddenCount = otherEvents.length - visible.length;
             return (
               <button
                 type="button"
@@ -79,7 +85,10 @@ export function MonthCalendar({ month, onPrevMonth, onNextMonth, events }: Month
                 aria-label={`${DAY_LABEL(date)}${dayEvents.length > 0 ? `, ${dayEvents.length} event${dayEvents.length === 1 ? '' : 's'}` : ''}`}
                 className={`calendar-day${inCurrentMonth ? '' : ' calendar-day-outside'}${isToday ? ' calendar-day-today' : ''}`}
               >
-                <div className="calendar-day-number">{date.getDate()}</div>
+                <div className="calendar-day-top">
+                  <span className="calendar-day-number">{date.getDate()}</span>
+                  {paydayEvent && <span className={`tag ${paydayEvent.tagClass} calendar-event calendar-payday`}>{paydayEvent.label}</span>}
+                </div>
                 {visible.map((event, i) => (
                   <span key={i} className={`tag ${event.tagClass} calendar-event`}>
                     {event.label}

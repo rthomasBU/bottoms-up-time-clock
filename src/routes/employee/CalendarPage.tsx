@@ -21,6 +21,7 @@ export function CalendarPage() {
       dateKey: toDateKey(d),
       label: 'Payday',
       tagClass: 'ok',
+      isPayday: true,
     }));
 
     const holidayEvents: CalendarEvent[] = holidays

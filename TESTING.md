@@ -64,6 +64,16 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] Fixed: the calendar's `min-width: 490px` grid was bleeding out to cause real page-level horizontal scroll at 390px width, not just its own internal scroll - fixed with `width: 100%` on `.calendar`/`.calendar-scroll` so the `overflow-x: auto` wrapper has a definite width to actually clip against. Re-verified clean after the fix (`document.documentElement.scrollWidth === window.innerWidth`, calendar's own scroll still works).
 - [x] Confirmed with real second/third employee accounts in production: approved PTO from other employees (e.g. "PTO - Test Employee", "PTO - Brian Pitre") shows correctly on the shared calendar with their names.
 
+## Payday tag moved next to the date number ✅ verified
+
+- [x] `MonthCalendar.tsx` now splits payday out of a day's regular event list and renders it inline next to the date number (`.calendar-day-top`), instead of stacked with holidays/PTO below. Identified via a new explicit `CalendarEvent.isPayday` flag (set only on payday events in `CalendarPage.tsx`) rather than inferring it from the label text or tag color, so it can't silently break if either of those ever changes.
+- [x] The day cell's other events (holidays/PTO) and the "+N more" overflow count are now computed from the non-payday events only, so a payday no longer eats one of the 2 visible slots.
+- [x] Verified live: paydays (every other Friday) show "PAYDAY" directly beside the date number; a day with both payday and PTO (didn't occur in current test data, but the split logic handles it) would show both correctly - payday inline, PTO stacked below.
+- [x] Checked at mobile width: the payday tag wraps to sit just below the date number within the same top group when the cell is too narrow to fit both on one line, rather than overflowing - still visually distinct from the day's other stacked events.
+- [x] Day-detail modal (click-to-expand) still lists Payday correctly alongside everything else for that day - only the day-cell's own compact rendering changed, not the modal.
+- [x] Accessible day-cell labels (e.g. "Friday, September 11, 2026, 1 event") are unaffected - still counts payday toward the total event count.
+- [x] No console errors, no page-level horizontal scroll.
+
 ## Calendar moved to its own tab; week progress + expandable day added ✅ verified
 
 - [x] Calendar moved off the home page to its own `/calendar` route and nav tab; home page (`/`) now shows a "This Week" hours-vs-40hr-target progress card (hourly employees only) instead.
