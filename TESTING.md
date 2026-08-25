@@ -93,6 +93,14 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [ ] **RLS check (not yet run)**: as a non-admin, `update time_entries set clock_in = clock_in - interval '1 hour' where id = <your own open entry>` must be rejected by the `time_entries_prevent_self_backdating` trigger.
 - [ ] **RLS check (not yet run)**: as a non-admin, clocking out via `update ... set clock_out = now(), edit_reason = 'test' where id = <your own open entry>` must be rejected (edit_reason no longer allowed on the self clock-out path).
 
+## Admin Timesheets: full roster, expandable per employee ✅ verified
+
+- [x] `/admin/timesheets` now always lists every active employee (from `useEmployees`, not just whoever has entries in the selected range) - built via a new `buildEmployeeGroups(employees, entries)` that left-joins entries onto the full roster, so a 0-entry employee still gets a row (muted "0.00 hrs" tag) instead of silently vanishing.
+- [x] Each employee row is now a click-to-expand toggle (`.section-head-toggle`, a reset-button inside the existing `.section-head` div rather than making the div itself a button, since the global bare-`button` selector's own background/border/padding would otherwise fight the section-head styling). Starts collapsed for all when viewing "All"; expanding one doesn't affect the others. A chevron (▸/▾) reflects state, `aria-expanded` set for a11y.
+- [x] Selecting one specific employee from the Employee filter now also filters the *roster itself* (not just the entries), so only that one row shows, always expanded, no chevron (nothing else to toggle) - verified with Chris Wiles.
+- [x] Verified the zero-entries empty state ("No entries in this range.") renders correctly when expanding an employee with no matching entries (Josh Springer), vs. the pay-period/day breakdown for one who does.
+- [x] Verified live: all 5 active employees listed, multiple rows can be expanded simultaneously and independently, existing map links/Edit links/pay-period+day subtotals all still correct at the new toggle layer. Clean at mobile width (375px), no console errors on a fresh tab.
+
 ## Admin Timesheets: per-employee day breakdown + pay period totals ✅ verified
 
 - [x] `/admin/timesheets` now nests three levels under each employee's existing `.section-head` (unchanged, still the grand total for the selected date range): a `.period-head` per pay period the selected range touches (label + period subtotal), then a `.day-head` per day within that period (label + day subtotal), then that day's entry table. Extracted `groupByDay`/`groupByPayPeriod` into a new shared `src/lib/timesheetGrouping.ts` so the employee's own Timesheet page and this admin page share one implementation instead of duplicating it. Also renamed `payroll.ts`'s `getCurrentPayPeriodRange` -> `getPayPeriodRange` since it's now called with arbitrary past entry dates, not just "now".

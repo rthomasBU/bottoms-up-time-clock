@@ -5,6 +5,9 @@ import { useEmployees } from '../../hooks/useEmployees';
 import { hoursBetween, formatTime } from '../../lib/time';
 import { mapLinkUrl } from '../../lib/geolocation';
 import { groupByDay, groupByPayPeriod } from '../../lib/timesheetGrouping';
+import type { Database } from '../../lib/database.types';
+
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 interface EmployeeGroup {
   employeeId: string;
@@ -13,26 +16,55 @@ interface EmployeeGroup {
   entries: AdminTimeEntryRow[];
 }
 
-function groupByEmployee(entries: AdminTimeEntryRow[]): EmployeeGroup[] {
-  const groups = new Map<string, EmployeeGroup>();
+/** One group per employee, in the same (alphabetical) order the employee
+ *  list comes in - including employees with zero entries in the selected
+ *  range, so the roster is always complete rather than only showing
+ *  whoever happened to have hours. */
+function buildEmployeeGroups(employees: Profile[], entries: AdminTimeEntryRow[]): EmployeeGroup[] {
+  const entriesByEmployee = new Map<string, AdminTimeEntryRow[]>();
   for (const entry of entries) {
-    const fullName = entry.profiles?.full_name ?? 'Unknown';
-    let group = groups.get(entry.employee_id);
-    if (!group) {
-      group = { employeeId: entry.employee_id, fullName, totalHours: 0, entries: [] };
-      groups.set(entry.employee_id, group);
-    }
-    group.entries.push(entry);
-    if (entry.clock_out) group.totalHours += hoursBetween(entry.clock_in, entry.clock_out);
+    const list = entriesByEmployee.get(entry.employee_id);
+    if (list) list.push(entry);
+    else entriesByEmployee.set(entry.employee_id, [entry]);
   }
-  return [...groups.values()].sort((a, b) => a.fullName.localeCompare(b.fullName));
+  return employees.map((emp) => {
+    const empEntries = entriesByEmployee.get(emp.id) ?? [];
+    const totalHours = empEntries.reduce(
+      (sum, e) => (e.clock_out ? sum + hoursBetween(e.clock_in, e.clock_out) : sum),
+      0,
+    );
+    return { employeeId: emp.id, fullName: emp.full_name, totalHours, entries: empEntries };
+  });
 }
 
 export function TimesheetsPage() {
   const [filters, setFilters] = useState(defaultFilters());
   const { entries, loading, error } = useAdminTimeEntries(filters);
   const { employees } = useEmployees();
-  const groups = useMemo(() => groupByEmployee(entries), [entries]);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const visibleEmployees = useMemo(
+    () => (filters.employeeId === 'all' ? employees : employees.filter((emp) => emp.id === filters.employeeId)),
+    [employees, filters.employeeId],
+  );
+  const groups = useMemo(() => buildEmployeeGroups(visibleEmployees, entries), [visibleEmployees, entries]);
+
+  // Filtering down to one employee always shows them expanded (there's
+  // nothing else on the page to toggle); otherwise expansion is manual and
+  // starts collapsed, so a full 10-15 person roster doesn't dump every
+  // pay-period/day breakdown on screen at once.
+  function isExpanded(employeeId: string) {
+    return filters.employeeId !== 'all' || expandedIds.has(employeeId);
+  }
+
+  function toggle(employeeId: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(employeeId)) next.delete(employeeId);
+      else next.add(employeeId);
+      return next;
+    });
+  }
 
   return (
     <div>
@@ -84,19 +116,36 @@ export function TimesheetsPage() {
 
       {error && <p className="form-error">{error}</p>}
       {loading && <p>Loading...</p>}
-      {!loading && entries.length === 0 && <p>No entries match these filters.</p>}
+      {!loading && groups.length === 0 && <p>No employees match these filters.</p>}
 
-      {groups.map((group, i) => (
+      {groups.map((group, i) => {
+        const expanded = isExpanded(group.employeeId);
+        return (
         <div key={group.employeeId}>
           <div className="section-head">
-            <span className="num">{i + 1}</span>
-            <h2>{group.fullName}</h2>
-            <span className="tag ok" style={{ marginLeft: 'auto' }}>
-              {group.totalHours.toFixed(2)} hrs
-            </span>
+            <button
+              type="button"
+              className="section-head-toggle"
+              onClick={() => toggle(group.employeeId)}
+              aria-expanded={expanded}
+              disabled={filters.employeeId !== 'all'}
+            >
+              <span className="num">{i + 1}</span>
+              <h2>{group.fullName}</h2>
+              <span className={`tag ${group.totalHours > 0 ? 'ok' : 'muted'}`} style={{ marginLeft: 'auto' }}>
+                {group.totalHours.toFixed(2)} hrs
+              </span>
+              {filters.employeeId === 'all' && (
+                <span className="chevron" aria-hidden="true">
+                  {expanded ? '▾' : '▸'}
+                </span>
+              )}
+            </button>
           </div>
 
-          {groupByPayPeriod(group.entries).map((period) => (
+          {expanded && group.entries.length === 0 && <p className="form-hint">No entries in this range.</p>}
+
+          {expanded && groupByPayPeriod(group.entries).map((period) => (
             <div key={period.periodKey}>
               <div className="period-head">
                 <span className="period-label">Pay Period: {period.label}</span>
@@ -181,7 +230,8 @@ export function TimesheetsPage() {
             </div>
           ))}
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

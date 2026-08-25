@@ -224,6 +224,38 @@ h2 {
 .section-head h2 {
   margin: 0;
 }
+/* A .section-head that's also a click-to-expand toggle (Timesheets
+   Browser's per-employee rows). The button lives *inside* the .section-head
+   div rather than the div itself being a <button>, because the bare
+   `button` selector above carries its own background/border/padding that
+   would otherwise fight the section-head layout - this way .section-head's
+   flex/border styling is untouched and only this inner element needs its
+   own (fully reset) button chrome. */
+.section-head-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+.section-head-toggle:disabled {
+  cursor: default;
+}
+.chevron {
+  font-family: var(--heading);
+  font-size: 14px;
+  color: var(--gray);
+}
+.section-head-toggle:hover:not(:disabled) .chevron {
+  color: var(--orange);
+}
 
 /* Sub-groupings nested under a .section-head (e.g. Timesheets Browser:
    employee -> pay period -> day). Deliberately lighter than .section-head
