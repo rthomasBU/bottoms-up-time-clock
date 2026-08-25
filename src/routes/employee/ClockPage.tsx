@@ -4,6 +4,7 @@ import { useClockStatus } from '../../hooks/useClockStatus';
 import { useTimesheet } from '../../hooks/useTimesheet';
 import { elapsedSince, formatTime, hoursBetween, getCurrentWeekRange } from '../../lib/time';
 import { OvertimeAlertsToggle } from '../../components/OvertimeAlertsToggle';
+import { TravelDayLogger } from '../../components/TravelDayLogger';
 
 const WEEKLY_TARGET_HOURS = 40;
 
@@ -78,6 +79,8 @@ export function ClockPage() {
           </div>
 
           {profile?.pay_type === 'hourly' && <OvertimeAlertsToggle />}
+
+          <TravelDayLogger />
         </>
       )}
       {error && <p className="form-error">{error}</p>}

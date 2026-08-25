@@ -16,6 +16,7 @@ export type EmploymentStatus = 'active' | 'inactive';
 export type TimeEntrySource = 'self' | 'admin_manual';
 export type PtoType = 'pto' | 'sick';
 export type PtoStatus = 'pending' | 'approved' | 'denied';
+export type TravelDaySource = 'self' | 'admin';
 
 export interface Database {
   public: {
@@ -169,6 +170,36 @@ export interface Database {
         Relationships: [
           {
             foreignKeyName: 'push_subscriptions_employee_id_fkey';
+            columns: ['employee_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      travel_days: {
+        Row: {
+          id: string;
+          employee_id: string;
+          travel_date: string;
+          notes: string | null;
+          source: TravelDaySource;
+          logged_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          employee_id: string;
+          travel_date: string;
+          notes?: string | null;
+          source?: TravelDaySource;
+          logged_by: string;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['travel_days']['Insert']>;
+        Relationships: [
+          {
+            foreignKeyName: 'travel_days_employee_id_fkey';
             columns: ['employee_id'];
             isOneToOne: false;
             referencedRelation: 'profiles';

@@ -70,6 +70,10 @@ This is the one part of the app that isn't just a SQL migration - Web Push needs
 
 Every live clock in/out captures a best-effort device location via the browser Geolocation API (`src/lib/geolocation.ts`), saved to `clock_in_lat/lng/accuracy_m` and `clock_out_lat/lng/accuracy_m` (`0009_time_entry_geolocation.sql`). It's always optional - a denied, unsupported, or slow (>6s) location never blocks the punch, it just saves as null. Admins see a "map" link next to any clock in/out that has a location on **Timesheets** (`/admin/timesheets`); employees don't see it on their own `/timesheet`. Manual admin entries never carry a location (they aren't a real device capture).
 
+## Travel days (per diem)
+
+Any employee (hourly or salaried - unlike the overtime alert, this isn't tied to pay type) can log a day they traveled for work from a card on the Clock tab (`src/components/TravelDayLogger.tsx`), so payroll knows which days to add a flat per diem allowance for. No dollar amount is stored - like hours, the actual payroll math happens manually outside the app. Self-logging is limited to the last 14 days, can't be future-dated, and one row per employee per date (`0011_travel_days.sql`); an employee can remove their own within that same 14-day window. Admins see every employee's logged travel days (with employee/date/notes/who-logged-it) and can export them separately on **Export** (`/admin/export`), alongside the existing hours export.
+
 ## Creating employee accounts
 
 There is no public signup - an admin creates each employee's login. Easiest path for 10-15 people: Supabase Dashboard → **Authentication → Users → Add user** (set an email + temp password, or send an invite email). A `profiles` row is auto-created for each new user (via a DB trigger); then set that employee's `role` (`employee`/`admin`) and `pay_type` (`hourly`/`salaried`) either in **Table Editor → profiles**, or via a small admin screen once one exists in the app.

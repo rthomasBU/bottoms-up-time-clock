@@ -837,6 +837,35 @@ progress {
   margin-top: 18px;
 }
 
+.travel-day-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.travel-day-list li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+.travel-day-list li > span:first-child {
+  font-family: var(--heading);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.travel-day-list .row-detail {
+  flex: 1;
+}
+.travel-day-list .btn-clear {
+  margin-left: auto;
+}
+
 .pto-actions {
   display: flex;
   gap: 8px;

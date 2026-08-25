@@ -64,6 +64,15 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] Fixed: the calendar's `min-width: 490px` grid was bleeding out to cause real page-level horizontal scroll at 390px width, not just its own internal scroll - fixed with `width: 100%` on `.calendar`/`.calendar-scroll` so the `overflow-x: auto` wrapper has a definite width to actually clip against. Re-verified clean after the fix (`document.documentElement.scrollWidth === window.innerWidth`, calendar's own scroll still works).
 - [x] Confirmed with real second/third employee accounts in production: approved PTO from other employees (e.g. "PTO - Test Employee", "PTO - Brian Pitre") shows correctly on the shared calendar with their names.
 
+## Travel day (per diem) logging (0011_travel_days.sql)
+
+- [x] `npm run typecheck` / `npm run lint` / `npm run build` all clean.
+- [x] New "Travel Day (Per Diem)" card on `/` (Clock tab), for every employee regardless of pay type - date picker (default today, capped to the last 14 days, no future dates), optional notes, "Log Travel Day" button, and a list of the employee's own recently logged days with a "Remove" link (only shown within the 14-day self-delete window).
+- [x] Verified the card degrades gracefully before the migration is applied: renders fully, shows a clear "Could not find the table 'public.travel_days'" error under the form instead of crashing the page - confirms no other part of the Clock tab (clock in/out, This Week, Overtime Alerts) is affected by this new card failing.
+- [ ] **Migration not yet applied to the live project** - nothing will actually save until `0011_travel_days.sql` is run. See the checklist given in chat.
+- [ ] Not yet verified end-to-end against live data (blocked on the migration above): logging a day, seeing it in the list, removing it, the unique-per-employee-per-date constraint surfacing a clear error on a duplicate, and the RLS backdating/future-date limits actually being enforced server-side (UI already blocks both via the date input's min/max).
+- [ ] Not yet verified: the new **Export** page "Travel Days (Per Diem)" section (employee/date/notes/logged-by table + separate CSV export) - same migration blocker.
+
 ## Payday tag moved next to the date number ✅ verified
 
 - [x] `MonthCalendar.tsx` now splits payday out of a day's regular event list and renders it inline next to the date number (`.calendar-day-top`), instead of stacked with holidays/PTO below. Identified via a new explicit `CalendarEvent.isPayday` flag (set only on payday events in `CalendarPage.tsx`) rather than inferring it from the label text or tag color, so it can't silently break if either of those ever changes.

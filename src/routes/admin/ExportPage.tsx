@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAdminTimeEntries, type EntryFilters } from '../../hooks/useAdminTimeEntries';
+import { useAdminTravelDays } from '../../hooks/useAdminTravelDays';
 import { useEmployees } from '../../hooks/useEmployees';
 import { hoursBetween, formatDateTime, formatDate } from '../../lib/time';
 import { toCsv, downloadCsv } from '../../lib/csv';
@@ -18,6 +19,7 @@ function defaultExportFilters(): EntryFilters {
 export function ExportPage() {
   const [filters, setFilters] = useState<EntryFilters>(defaultExportFilters());
   const { entries, loading, error } = useAdminTimeEntries(filters);
+  const { travelDays, loading: travelDaysLoading, error: travelDaysError } = useAdminTravelDays(filters);
   const { employees } = useEmployees();
 
   const closedEntries = entries.filter((e) => e.clock_out);
@@ -35,6 +37,17 @@ export function ExportPage() {
     }));
     const csv = toCsv(rows);
     downloadCsv(`timesheet_${filters.from}_to_${filters.to}.csv`, csv);
+  }
+
+  function handleExportTravelDaysCsv() {
+    const rows = travelDays.map((t) => ({
+      employee: t.profiles?.full_name ?? 'Unknown',
+      date: formatDate(t.travel_date),
+      notes: t.notes ?? '',
+      logged_by: t.source === 'self' ? 'Employee' : 'Admin',
+    }));
+    const csv = toCsv(rows);
+    downloadCsv(`travel_days_${filters.from}_to_${filters.to}.csv`, csv);
   }
 
   return (
@@ -111,6 +124,51 @@ export function ExportPage() {
           </tbody>
         </table>
       </div>
+
+      <div className="section-head">
+        <span className="num">2</span>
+        <h2>Travel Days (Per Diem)</h2>
+      </div>
+
+      {travelDaysError && <p className="form-error">{travelDaysError}</p>}
+      {travelDaysLoading && <p>Loading...</p>}
+      {!travelDaysLoading && travelDays.length === 0 && <p className="form-hint">No travel days logged in this range.</p>}
+
+      {travelDays.length > 0 && (
+        <>
+          <div className="export-actions no-print">
+            <button type="button" onClick={handleExportTravelDaysCsv}>
+              Export Travel Days CSV
+            </button>
+          </div>
+          <div className="tablewrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Date</th>
+                  <th>Notes</th>
+                  <th>Logged By</th>
+                </tr>
+              </thead>
+              <tbody>
+                {travelDays.map((t) => (
+                  <tr key={t.id} className="row">
+                    <td>{t.profiles?.full_name ?? 'Unknown'}</td>
+                    <td>{formatDate(t.travel_date)}</td>
+                    <td>{t.notes}</td>
+                    <td>
+                      <span className={`tag ${t.source === 'self' ? 'muted' : 'ok'}`}>
+                        {t.source === 'self' ? 'Employee' : 'Admin'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }
