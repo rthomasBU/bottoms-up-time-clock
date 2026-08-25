@@ -93,6 +93,11 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [ ] **RLS check (not yet run)**: as a non-admin, `update time_entries set clock_in = clock_in - interval '1 hour' where id = <your own open entry>` must be rejected by the `time_entries_prevent_self_backdating` trigger.
 - [ ] **RLS check (not yet run)**: as a non-admin, clocking out via `update ... set clock_out = now(), edit_reason = 'test' where id = <your own open entry>` must be rejected (edit_reason no longer allowed on the self clock-out path).
 
+## Employee timesheet grouped by day with per-day totals ✅ verified
+
+- [x] `/timesheet`'s entry list now groups rows under a numbered `.section-head` per calendar day (most recent first), each with its own hours subtotal tag and its own table (mirrors the same grouping pattern used on the admin Timesheets page, grouped by day instead of by employee). Date column removed from the row table since it's now the group header.
+- [x] Verified live: day totals (8.22 / 2.18 / 8.00 / 4.50) match exactly what the Today/Current Pay Period/Last 30 Days KPI cards above compute independently. Checked at mobile width (375px), no horizontal scroll, no console errors on a fresh tab.
+
 ## Employee timesheet cards: Today / Current Pay Period / Last 30 Days ✅ verified
 
 - [x] `/timesheet` shows three `.kpis` cards - Today, Current Pay Period, Last 30 Days (superseding the earlier Last 7/30/60 Days version) - computed client-side off the same 60-day fetch `useTimesheet` already does, no extra query. "Current Pay Period" uses the new `getCurrentPayPeriodRange` in `src/lib/payroll.ts`, sharing the same anchor/period-length constants as the payday math so the two stay consistent.

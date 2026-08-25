@@ -1,7 +1,8 @@
+import { useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useTimesheet } from '../../hooks/useTimesheet';
 import { hoursBetween, formatTime, formatDate } from '../../lib/time';
-import { getCurrentPayPeriodRange } from '../../lib/payroll';
+import { getCurrentPayPeriodRange, toDateKey } from '../../lib/payroll';
 import type { Database } from '../../lib/database.types';
 
 type TimeEntry = Database['public']['Tables']['time_entries']['Row'];
@@ -22,9 +23,35 @@ function hoursInLastDays(entries: TimeEntry[], days: number): number {
   return hoursInRange(entries, cutoff, new Date());
 }
 
+interface DayGroup {
+  dateKey: string;
+  label: string;
+  totalHours: number;
+  entries: TimeEntry[];
+}
+
+/** Groups entries by calendar day (each clock in/out belongs to the day it
+ *  started on), most recent day first - entries already arrive sorted
+ *  newest-first from useTimesheet, so a Map preserves that day order. */
+function groupByDay(entries: TimeEntry[]): DayGroup[] {
+  const groups = new Map<string, DayGroup>();
+  for (const entry of entries) {
+    const dateKey = toDateKey(new Date(entry.clock_in));
+    let group = groups.get(dateKey);
+    if (!group) {
+      group = { dateKey, label: formatDate(entry.clock_in), totalHours: 0, entries: [] };
+      groups.set(dateKey, group);
+    }
+    group.entries.push(entry);
+    if (entry.clock_out) group.totalHours += hoursBetween(entry.clock_in, entry.clock_out);
+  }
+  return [...groups.values()];
+}
+
 export function TimesheetHistoryPage() {
   const { profile } = useAuth();
   const { entries, loading, error } = useTimesheet(profile?.id);
+  const days = useMemo(() => groupByDay(entries), [entries]);
 
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -60,32 +87,39 @@ export function TimesheetHistoryPage() {
       {loading && <p>Loading...</p>}
       {!loading && entries.length === 0 && <p>No time entries yet.</p>}
 
-      {entries.length > 0 && (
-        <div className="tablewrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Time</th>
-                <th>Hours</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((e) => (
-                <tr key={e.id} className="row">
-                  <td>{formatDate(e.clock_in)}</td>
-                  <td>
-                    {formatTime(e.clock_in)} - {e.clock_out ? formatTime(e.clock_out) : 'now'}
-                  </td>
-                  <td className="num">{e.clock_out ? hoursBetween(e.clock_in, e.clock_out).toFixed(2) : '-'}</td>
-                  <td>{e.edited_by && <span className="tag muted">{e.source === 'self' ? 'edited' : 'edited by admin'}</span>}</td>
+      {days.map((day, i) => (
+        <div key={day.dateKey}>
+          <div className="section-head">
+            <span className="num">{i + 1}</span>
+            <h2>{day.label}</h2>
+            <span className="tag ok" style={{ marginLeft: 'auto' }}>
+              {day.totalHours.toFixed(2)} hrs
+            </span>
+          </div>
+          <div className="tablewrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Hours</th>
+                  <th></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {day.entries.map((e) => (
+                  <tr key={e.id} className="row">
+                    <td>
+                      {formatTime(e.clock_in)} - {e.clock_out ? formatTime(e.clock_out) : 'now'}
+                    </td>
+                    <td className="num">{e.clock_out ? hoursBetween(e.clock_in, e.clock_out).toFixed(2) : '-'}</td>
+                    <td>{e.edited_by && <span className="tag muted">{e.source === 'self' ? 'edited' : 'edited by admin'}</span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      )}
+      ))}
     </div>
   );
 }
