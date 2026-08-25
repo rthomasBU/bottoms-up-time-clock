@@ -225,6 +225,43 @@ h2 {
   margin: 0;
 }
 
+/* Sub-groupings nested under a .section-head (e.g. Timesheets Browser:
+   employee -> pay period -> day). Deliberately lighter than .section-head
+   (thin --line border instead of a 3px orange one, no numbered badge) so
+   the employee-level grouping stays the visual anchor. */
+.period-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 6px;
+  margin: 22px 0 10px;
+}
+.period-head .period-label {
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.day-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 14px 0 6px 4px;
+}
+.day-head .day-label {
+  font-family: var(--heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray);
+}
+
 /* Buttons */
 .toolbar {
   display: flex;

@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useTimesheet } from '../../hooks/useTimesheet';
-import { hoursBetween, formatTime, formatDate } from '../../lib/time';
-import { getCurrentPayPeriodRange, toDateKey } from '../../lib/payroll';
+import { hoursBetween, formatTime } from '../../lib/time';
+import { getPayPeriodRange } from '../../lib/payroll';
+import { groupByDay } from '../../lib/timesheetGrouping';
 import type { Database } from '../../lib/database.types';
 
 type TimeEntry = Database['public']['Tables']['time_entries']['Row'];
@@ -23,31 +24,6 @@ function hoursInLastDays(entries: TimeEntry[], days: number): number {
   return hoursInRange(entries, cutoff, new Date());
 }
 
-interface DayGroup {
-  dateKey: string;
-  label: string;
-  totalHours: number;
-  entries: TimeEntry[];
-}
-
-/** Groups entries by calendar day (each clock in/out belongs to the day it
- *  started on), most recent day first - entries already arrive sorted
- *  newest-first from useTimesheet, so a Map preserves that day order. */
-function groupByDay(entries: TimeEntry[]): DayGroup[] {
-  const groups = new Map<string, DayGroup>();
-  for (const entry of entries) {
-    const dateKey = toDateKey(new Date(entry.clock_in));
-    let group = groups.get(dateKey);
-    if (!group) {
-      group = { dateKey, label: formatDate(entry.clock_in), totalHours: 0, entries: [] };
-      groups.set(dateKey, group);
-    }
-    group.entries.push(entry);
-    if (entry.clock_out) group.totalHours += hoursBetween(entry.clock_in, entry.clock_out);
-  }
-  return [...groups.values()];
-}
-
 export function TimesheetHistoryPage() {
   const { profile } = useAuth();
   const { entries, loading, error } = useTimesheet(profile?.id);
@@ -56,7 +32,7 @@ export function TimesheetHistoryPage() {
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const endOfToday = new Date(startOfToday.getTime() + 24 * 60 * 60 * 1000 - 1);
-  const payPeriod = getCurrentPayPeriodRange(now);
+  const payPeriod = getPayPeriodRange(now);
 
   return (
     <div>

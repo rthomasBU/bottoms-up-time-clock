@@ -2,8 +2,9 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAdminTimeEntries, defaultFilters, type AdminTimeEntryRow } from '../../hooks/useAdminTimeEntries';
 import { useEmployees } from '../../hooks/useEmployees';
-import { hoursBetween, formatDateTime } from '../../lib/time';
+import { hoursBetween, formatTime } from '../../lib/time';
 import { mapLinkUrl } from '../../lib/geolocation';
+import { groupByDay, groupByPayPeriod } from '../../lib/timesheetGrouping';
 
 interface EmployeeGroup {
   employeeId: string;
@@ -94,73 +95,91 @@ export function TimesheetsPage() {
               {group.totalHours.toFixed(2)} hrs
             </span>
           </div>
-          <div className="tablewrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Clock In</th>
-                  <th>Clock Out</th>
-                  <th>Hours</th>
-                  <th></th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {group.entries.map((entry) => (
-                  <tr key={entry.id} className="row">
-                    <td>
-                      {formatDateTime(entry.clock_in)}
-                      {entry.clock_in_lat != null && entry.clock_in_lng != null && (
-                        <>
-                          {' '}
-                          <a
-                            href={mapLinkUrl(entry.clock_in_lat, entry.clock_in_lng)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="row-map-link"
-                          >
-                            map
-                          </a>
-                        </>
-                      )}
-                    </td>
-                    <td>
-                      {entry.clock_out ? formatDateTime(entry.clock_out) : 'still clocked in'}
-                      {entry.clock_out_lat != null && entry.clock_out_lng != null && (
-                        <>
-                          {' '}
-                          <a
-                            href={mapLinkUrl(entry.clock_out_lat, entry.clock_out_lng)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="row-map-link"
-                          >
-                            map
-                          </a>
-                        </>
-                      )}
-                    </td>
-                    <td className="num">
-                      {entry.clock_out ? hoursBetween(entry.clock_in, entry.clock_out).toFixed(2) : '-'}
-                    </td>
-                    <td>
-                      {entry.edited_by && (
-                        <>
-                          <span className="tag muted">{entry.source === 'self' ? 'self-edited' : 'admin-edited'}</span>
-                          {entry.edit_reason && <div className="row-reason">Note: {entry.edit_reason}</div>}
-                        </>
-                      )}
-                    </td>
-                    <td>
-                      <Link to={`/admin/entries/${entry.id}`} className="btn-clear">
-                        Edit
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+
+          {groupByPayPeriod(group.entries).map((period) => (
+            <div key={period.periodKey}>
+              <div className="period-head">
+                <span className="period-label">Pay Period: {period.label}</span>
+                <span className="tag muted">{period.totalHours.toFixed(2)} hrs</span>
+              </div>
+
+              {groupByDay(period.entries).map((day) => (
+                <div key={day.dateKey}>
+                  <div className="day-head">
+                    <span className="day-label">{day.label}</span>
+                    <span className="tag muted">{day.totalHours.toFixed(2)} hrs</span>
+                  </div>
+                  <div className="tablewrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Clock In</th>
+                          <th>Clock Out</th>
+                          <th>Hours</th>
+                          <th></th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {day.entries.map((entry) => (
+                          <tr key={entry.id} className="row">
+                            <td>
+                              {formatTime(entry.clock_in)}
+                              {entry.clock_in_lat != null && entry.clock_in_lng != null && (
+                                <>
+                                  {' '}
+                                  <a
+                                    href={mapLinkUrl(entry.clock_in_lat, entry.clock_in_lng)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="row-map-link"
+                                  >
+                                    map
+                                  </a>
+                                </>
+                              )}
+                            </td>
+                            <td>
+                              {entry.clock_out ? formatTime(entry.clock_out) : 'still clocked in'}
+                              {entry.clock_out_lat != null && entry.clock_out_lng != null && (
+                                <>
+                                  {' '}
+                                  <a
+                                    href={mapLinkUrl(entry.clock_out_lat, entry.clock_out_lng)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="row-map-link"
+                                  >
+                                    map
+                                  </a>
+                                </>
+                              )}
+                            </td>
+                            <td className="num">
+                              {entry.clock_out ? hoursBetween(entry.clock_in, entry.clock_out).toFixed(2) : '-'}
+                            </td>
+                            <td>
+                              {entry.edited_by && (
+                                <>
+                                  <span className="tag muted">{entry.source === 'self' ? 'self-edited' : 'admin-edited'}</span>
+                                  {entry.edit_reason && <div className="row-reason">Note: {entry.edit_reason}</div>}
+                                </>
+                              )}
+                            </td>
+                            <td>
+                              <Link to={`/admin/entries/${entry.id}`} className="btn-clear">
+                                Edit
+                              </Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
         </div>
       ))}
     </div>

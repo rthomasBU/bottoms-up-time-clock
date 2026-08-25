@@ -38,13 +38,15 @@ export function getPaydaysInRange(start: Date, end: Date): Date[] {
 }
 
 /** Start (00:00:00) through end (23:59:59.999) of the 2-week pay period
- *  containing `now`, using the same period-end anchor as getPaydaysInRange -
- *  periods end Sundays, anchored to 2026-08-23, so e.g. 2026-08-24 through
- *  2026-09-06 is one period. */
-export function getCurrentPayPeriodRange(now: Date): { start: Date; end: Date } {
+ *  containing `date` (any date, not just "now" - used both for "what period
+ *  are we in right now" and "what period did this past entry fall into"),
+ *  using the same period-end anchor as getPaydaysInRange - periods end
+ *  Sundays, anchored to 2026-08-23, so e.g. 2026-08-24 through 2026-09-06
+ *  is one period. */
+export function getPayPeriodRange(date: Date): { start: Date; end: Date } {
   const msPerDay = 24 * 60 * 60 * 1000;
-  const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const daysFromAnchor = Math.round((nowDateOnly.getTime() - PAY_PERIOD_END_ANCHOR.getTime()) / msPerDay);
+  const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const daysFromAnchor = Math.round((dateOnly.getTime() - PAY_PERIOD_END_ANCHOR.getTime()) / msPerDay);
   const periodsFromAnchor = Math.ceil(daysFromAnchor / PERIOD_LENGTH_DAYS);
   const end = addDays(PAY_PERIOD_END_ANCHOR, periodsFromAnchor * PERIOD_LENGTH_DAYS);
   const start = addDays(end, -(PERIOD_LENGTH_DAYS - 1));

@@ -93,6 +93,13 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [ ] **RLS check (not yet run)**: as a non-admin, `update time_entries set clock_in = clock_in - interval '1 hour' where id = <your own open entry>` must be rejected by the `time_entries_prevent_self_backdating` trigger.
 - [ ] **RLS check (not yet run)**: as a non-admin, clocking out via `update ... set clock_out = now(), edit_reason = 'test' where id = <your own open entry>` must be rejected (edit_reason no longer allowed on the self clock-out path).
 
+## Admin Timesheets: per-employee day breakdown + pay period totals ✅ verified
+
+- [x] `/admin/timesheets` now nests three levels under each employee's existing `.section-head` (unchanged, still the grand total for the selected date range): a `.period-head` per pay period the selected range touches (label + period subtotal), then a `.day-head` per day within that period (label + day subtotal), then that day's entry table. Extracted `groupByDay`/`groupByPayPeriod` into a new shared `src/lib/timesheetGrouping.ts` so the employee's own Timesheet page and this admin page share one implementation instead of duplicating it. Also renamed `payroll.ts`'s `getCurrentPayPeriodRange` -> `getPayPeriodRange` since it's now called with arbitrary past entry dates, not just "now".
+- [x] Verified live with real data spanning a period boundary (the default 14-day filter happened to catch parts of two pay periods): Ryan Thomas's 22.90 hr total correctly split into "Aug 24 - Sep 6" (10.40, = Aug 25's 8.22 + Aug 24's 2.18) and "Aug 10 - Aug 23" (12.50, = Aug 22's 8.00 + Aug 20's 4.50) - both period subtotals and both day subtotals cross-checked by hand and matched exactly, most-recent period and day first.
+- [x] Map links (geolocation feature) and Edit links still work correctly at the new nesting depth.
+- [x] Checked at mobile width (375px), no horizontal scroll, no console errors on a fresh tab.
+
 ## Employee timesheet grouped by day with per-day totals ✅ verified
 
 - [x] `/timesheet`'s entry list now groups rows under a numbered `.section-head` per calendar day (most recent first), each with its own hours subtotal tag and its own table (mirrors the same grouping pattern used on the admin Timesheets page, grouped by day instead of by employee). Date column removed from the row table since it's now the group header.
