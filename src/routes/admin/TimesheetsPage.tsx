@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAdminTimeEntries, defaultFilters, type AdminTimeEntryRow } from '../../hooks/useAdminTimeEntries';
+import { useAdminTimeEntries, type EntryFilters, type AdminTimeEntryRow } from '../../hooks/useAdminTimeEntries';
 import { useEmployees } from '../../hooks/useEmployees';
 import { hoursBetween, formatTime } from '../../lib/time';
 import { mapLinkUrl } from '../../lib/geolocation';
@@ -9,6 +9,13 @@ import { groupByDay, groupByPayPeriod } from '../../lib/timesheetGrouping';
 import type { Database } from '../../lib/database.types';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
+
+const CURRENT_YEAR = new Date().getFullYear();
+// This far back is already more history than the app has - it went live
+// in 2026 - but a fixed lookback (rather than deriving it from real data)
+// keeps the list stable and cheap to render instead of depending on a
+// query for "earliest entry ever".
+const YEAR_OPTIONS = Array.from({ length: 5 }, (_, i) => CURRENT_YEAR - i);
 
 interface EmployeeGroup {
   employeeId: string;
@@ -35,7 +42,7 @@ function buildEmployeeGroups(employees: Profile[], entries: AdminTimeEntryRow[])
 }
 
 /** Closed-entry hours per employee, e.g. for the current-pay-period total
- *  shown on each employee's row (independent of the From/To range below -
+ *  shown on each employee's row (independent of the Year selected below -
  *  see the separate currentPeriodEntries fetch in the component). */
 function hoursByEmployee(entries: AdminTimeEntryRow[]): Map<string, number> {
   const totals = new Map<string, number>();
@@ -47,7 +54,8 @@ function hoursByEmployee(entries: AdminTimeEntryRow[]): Map<string, number> {
 }
 
 export function TimesheetsPage() {
-  const [filters, setFilters] = useState(defaultFilters());
+  const [year, setYear] = useState(CURRENT_YEAR);
+  const filters = useMemo<EntryFilters>(() => ({ from: `${year}-01-01`, to: `${year}-12-31`, employeeId: 'all' }), [year]);
   const { entries, loading, error } = useAdminTimeEntries(filters);
   const { employees } = useEmployees();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
@@ -115,22 +123,14 @@ export function TimesheetsPage() {
 
       <div className="filter-row">
         <div className="fcol">
-          <label htmlFor="from">From</label>
-          <input
-            id="from"
-            type="date"
-            value={filters.from}
-            onChange={(e) => setFilters({ ...filters, from: e.target.value })}
-          />
-        </div>
-        <div className="fcol">
-          <label htmlFor="to">To</label>
-          <input
-            id="to"
-            type="date"
-            value={filters.to}
-            onChange={(e) => setFilters({ ...filters, to: e.target.value })}
-          />
+          <label htmlFor="year">Year</label>
+          <select id="year" value={year} onChange={(e) => setYear(Number(e.target.value))}>
+            {YEAR_OPTIONS.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 

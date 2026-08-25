@@ -98,6 +98,13 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] No console errors on a fresh tab (a second, pre-existing tab's console history had stale Vite HMR errors referencing removed code from earlier in the session - confirmed those don't reproduce on a fresh navigation, per the established stale-HMR pattern).
 - [x] `npm run typecheck` / `npm run lint` / `npm run build` all clean.
 
+## Timesheets Browser date range replaced with a Year picker ✅ verified live
+
+- [x] `/admin/timesheets` no longer has From/To date inputs - replaced with a single Year dropdown (2026 down to 2022, current year selected by default), filtering to that whole calendar year (Jan 1 - Dec 31) rather than an arbitrary range. The per-employee row tag ("X hrs this period") is unaffected - it's already a separate fetch pinned to the current pay period regardless of this filter.
+- [x] Verified live: default loads 2026 with real data (Ryan Thomas 2 pay periods, 96.67 + 10.40 hrs); switching to 2025 while Ryan Thomas was still expanded correctly recomputed to "No entries in this range." rather than leaving stale data or crashing.
+- [x] No console errors on a fresh tab, no horizontal scroll at mobile width (375px).
+- [x] `npm run typecheck` / `npm run lint` / `npm run build` all clean.
+
 ## Per-day table columns no longer misalign ✅ verified live
 
 - [x] Fixed a real bug reported by the user (with a screenshot of `/admin/timesheets`): Timesheets Browser and the employee Timesheet page each render one separate `<table>` per day, and a plain HTML table auto-sizes its own columns from its own content only - so a day with a wider row (a self-edited/admin-edited badge + note) ended up with different column widths than a day without one, even though visually stacked as if they were one continuous table. `table.entries-table` (`index.css`) now uses `table-layout: fixed` with an explicit `<colgroup>` on both tables, forcing every day's columns to the same widths regardless of that day's own content.
