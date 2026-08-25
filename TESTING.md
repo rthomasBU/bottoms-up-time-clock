@@ -98,7 +98,7 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] No console errors on a fresh tab (a second, pre-existing tab's console history had stale Vite HMR errors referencing removed code from earlier in the session - confirmed those don't reproduce on a fresh navigation, per the established stale-HMR pattern).
 - [x] `npm run typecheck` / `npm run lint` / `npm run build` all clean.
 
-## Tech Support day logging (0014_tech_support_days.sql)
+## Tech Support day logging (0014_tech_support_days.sql) ✅ verified live
 
 - [x] `npm run typecheck` / `npm run lint` / `npm run build` all clean.
 - [x] New "Tech Support" nav link (between Travel and PTO) -> `/tech-support`, rendering `TechSupportPage.tsx` wrapping `TechSupportDayLogger.tsx` - deliberately built as a straight copy of the Travel feature's shape (same table structure, same RLS policies down to the 14-day self-edit/delete window, same start/end date-range logging form with upsert+ignoreDuplicates, same list-with-Remove-link display) since the user asked for "same format as travel tab".
@@ -106,7 +106,7 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] Feeds the previously-always-blank `Pay/Tech Support/Units` column of the GRIN payroll export - `buildPayrollExportRows` now takes a 5th `techSupportDays` argument and counts logged days per employee in range, same pattern as travel days -> `Pay/Per Diem/Units`.
 - [x] Verified live (pre-migration, table doesn't exist yet): `/tech-support` renders the full form correctly and surfaces "Could not find the table 'public.tech_support_days' in the schema cache" instead of crashing; `/admin/export` also degrades gracefully - shows the same error inline but the preview table still renders (Tech Support column empty, everything else populated as before).
 - [x] Confirmed no page-level horizontal scroll at mobile width (375px) on either page; no uncaught console errors on a fresh tab (the two expected 404s from the not-yet-created table match the on-screen error, not a crash).
-- [ ] Not yet verified: the actual logging path (insert/select/delete against the real table) - blocked on the migration below being run.
+- [x] Post-migration, verified the full logging path against the real table: logged a day with a note on `/tech-support`, confirmed "Logged 1 tech support day" and the entry appeared in the list with its note and a Remove link; confirmed it correctly flowed into `/admin/export`'s preview table as `Pay/Tech Support/Units: 1` on Ryan Thomas's row for the current pay period; removed the test entry via its Remove link and confirmed it disappeared from the list (self-delete-within-window RLS policy working).
 
 ## Export date range replaced with a Pay Period picker ✅ verified live
 
