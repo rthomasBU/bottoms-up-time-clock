@@ -31,6 +31,7 @@ export interface Database {
           hourly_rate: number | null;
           employment_status: EmploymentStatus;
           pto_balance_hours: number;
+          payroll_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -42,6 +43,7 @@ export interface Database {
           hourly_rate?: number | null;
           employment_status?: EmploymentStatus;
           pto_balance_hours?: number;
+          payroll_id?: string | null;
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>;

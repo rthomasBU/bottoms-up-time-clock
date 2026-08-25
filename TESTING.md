@@ -64,6 +64,19 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] Fixed: the calendar's `min-width: 490px` grid was bleeding out to cause real page-level horizontal scroll at 390px width, not just its own internal scroll - fixed with `width: 100%` on `.calendar`/`.calendar-scroll` so the `overflow-x: auto` wrapper has a definite width to actually clip against. Re-verified clean after the fix (`document.documentElement.scrollWidth === window.innerWidth`, calendar's own scroll still works).
 - [x] Confirmed with real second/third employee accounts in production: approved PTO from other employees (e.g. "PTO - Test Employee", "PTO - Brian Pitre") shows correctly on the shared calendar with their names.
 
+## Payroll export matching GRIN's ExcelTimeClock format (0012_payroll_id.sql) ✅ verified live
+
+- [x] `npm run typecheck` / `npm run lint` / `npm run build` all clean. `npm audit` clean (0 vulnerabilities) after installing `xlsx` from SheetJS's own CDN tarball instead of the vulnerable npm-registry release.
+- [x] New "Payroll Import (GRIN)" section on `/admin/export` (now section 1, hours renumbered to 2, travel days to 3) with a single `Export Payroll (GRIN Format)` primary button (demoted the old hours "Export CSV" to secondary, since this is now the primary payroll workflow) and a hint calling out how many visible employees are missing a `payroll_id`.
+- [x] Default export date range changed from a rolling "last 14 days" to the current pay period (`getPayPeriodRange`) - confirmed live (From/To auto-filled 08/24/2026-09/06/2026) - needed for the overtime weekly split to be exact, since it only sees entries inside the exported range.
+- [x] Added `profiles.payroll_id` (admin-only via RLS, no in-app editor yet - Table Editor only) for the EmployeeID column.
+- [x] `xlsx` (SheetJS) confirmed dynamic-imported only on click (separate ~493KB chunk, absent from the network log until the button is pressed) and confirmed excluded from the PWA precache manifest (`vite.config.ts` globIgnores) - precache dropped from 14 entries/982KB back to 13/501KB after adding the exclusion.
+- [x] **Verified the actual generated file**, not just that a download fired: intercepted the blob before the browser's own download step, re-parsed it with the same SheetJS already loaded on the page, and confirmed via `XLSX.utils.sheet_to_json` - header row byte-for-byte matches the reference `ExcelTimeClock_GRIN_*.xlsx` template's 15 columns in the same order; sheet name follows the same `ExcelTimeClock_GRIN_YYYYMMDD` convention; all 10 active employees listed; Dept/Locn/Job/Shift all correct; salaried employees show `Pay/Salary/Units: "1"` with Hourly/Overtime blank; Ryan Thomas (hourly) showed `Pay/Hourly/Units: "10.40"` matching the figure already independently verified on the Timesheets page for the same pay period, with Overtime correctly blank (under 40 hrs/week); PTO units populated from real approved-PTO data via the already-verified `useTeamPto` hook; Bonus/Tech Support/Holiday blank for everyone.
+- [x] Confirmed no page-level horizontal scroll at mobile width (375px), no console errors on a fresh tab.
+- [ ] Not yet tested: an actual EmployeeID value once `payroll_id` is set for a real employee (only verified the blank-value path, since no employee had one set during this test).
+- [ ] Not yet tested: the overtime split with an employee who's genuinely worked over 40 hours in a single week (no test data crossed that threshold this pass).
+- [ ] Not yet confirmed by GRIN itself - this test only proves the file is well-formed OOXML with the right shape/values, not that GRIN's own importer accepts it without complaint.
+
 ## Travel renamed + date-range logging + Overtime Alerts moved to the bottom ✅ verified live
 
 - [x] Clock tab card order is now Status → Clock button → This Week → Travel (Per Diem) → Overtime Alerts (was Overtime Alerts before Travel) - a pure JSX reorder in `ClockPage.tsx`, no logic change.

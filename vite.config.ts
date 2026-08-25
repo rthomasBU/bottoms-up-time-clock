@@ -45,6 +45,12 @@ export default defineConfig({
         // switching this whole PWA to the injectManifest strategy, so
         // precaching/the Supabase NetworkOnly rule above are untouched.
         importScripts: ['/push-sw.js'],
+        // The xlsx (SheetJS) chunk is ~500KB and only ever dynamically
+        // imported by an admin exporting payroll (src/lib/payrollExport.ts)
+        // - excluded from the precache manifest so it isn't force-downloaded
+        // to every employee's phone on install, just fetched normally the
+        // one time it's actually needed.
+        globIgnores: ['**/xlsx-*.js'],
       },
     }),
   ],

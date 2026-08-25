@@ -74,6 +74,22 @@ Every live clock in/out captures a best-effort device location via the browser G
 
 Any employee (hourly or salaried - unlike the overtime alert, this isn't tied to pay type) can log the days they traveled for work from a "Travel (Per Diem)" card on the Clock tab (`src/components/TravelDayLogger.tsx`), so payroll knows which days to add a flat per diem allowance for. Logging works over a start-end date range in one go - each date in the range still becomes its own row (`useTravelDays.logTravelDays` upserts with `ignoreDuplicates`, so a date that's already logged is silently skipped rather than failing the whole range; the form reports back how many were newly logged vs already existed). No dollar amount is stored - like hours, the actual payroll math happens manually outside the app. Self-logging is limited to the last 14 days, can't be future-dated, and one row per employee per date (`0011_travel_days.sql`); an employee can remove their own within that same 14-day window. Admins see every employee's logged travel days (with employee/date/notes/who-logged-it) and can export them separately on **Export** (`/admin/export`), alongside the existing hours export.
 
+## Payroll export (GRIN format)
+
+**Export** (`/admin/export`) can generate a `.xlsx` matching GRIN's own ExcelTimeClock import template exactly (`src/lib/payrollExport.ts`) - one row per employee, columns `EmployeeID, FirstName, LastName, Dept, Locn, Job, Shift, Pay/Hourly/Units, Pay/Overtime/Units, Pay/Salary/Units, Pay/Bonus/Units, Pay/Tech Support/Units, Pay/PTO/Units, Pay/Holiday/Units, Pay/Per Diem/Units`. What each column pulls from:
+
+- **EmployeeID** - `profiles.payroll_id` (`0012_payroll_id.sql`), an admin-set free-text field with no in-app editor yet - set it via Supabase Table Editor -> profiles -> payroll_id. Blank until set.
+- **FirstName/LastName** - split from `profiles.full_name` on the first space; a name with more than two parts puts everything after the first word into LastName.
+- **Dept** - `"Hourly"` or `"Salary"` from `profiles.pay_type`.
+- **Locn** - always `"Default Location"` (the only value the template itself ever uses); **Job** - always blank; **Shift** - always `1`.
+- **Pay/Hourly/Units** and **Pay/Overtime/Units** - hourly employees only, split per Monday-Sunday workweek from the exported date range's closed time entries (hours over 40 in a week -> Overtime, the rest -> Hourly). Exact only when the exported range covers whole weeks, which is why the default range is the current pay period (`getPayPeriodRange`) rather than a rolling window.
+- **Pay/Salary/Units** - `"1"` for salaried employees (a flat "paid this period" signal - the real salary amount lives in GRIN), blank for hourly.
+- **Pay/PTO/Units** - approved PTO/sick hours overlapping the range, from the same `useTeamPto` hook the Calendar uses; combines both request types since the template has no separate sick column.
+- **Pay/Per Diem/Units** - count of logged travel days in the range for that employee.
+- **Pay/Bonus/Units**, **Pay/Tech Support/Units**, **Pay/Holiday/Units** - always blank; nothing in this app produces that data.
+
+Every active employee is included regardless of whether they have any hours/PTO/travel in range, matching the template always listing the full roster. The `xlsx` (SheetJS) library is dynamic-imported only when this export is actually clicked and excluded from the PWA precache (`vite.config.ts` `globIgnores`), so its ~500KB never reaches an employee's phone just for clocking in/out. Installed from SheetJS's own CDN (`npm install https://cdn.sheetjs.com/xlsx-<version>/xlsx-<version>.tgz`) rather than the `xlsx` npm registry package, which is stuck on an old release with known vulnerabilities the maintainer stopped patching there.
+
 ## Creating employee accounts
 
 There is no public signup - an admin creates each employee's login. Easiest path for 10-15 people: Supabase Dashboard → **Authentication → Users → Add user** (set an email + temp password, or send an invite email). A `profiles` row is auto-created for each new user (via a DB trigger); then set that employee's `role` (`employee`/`admin`) and `pay_type` (`hourly`/`salaried`) either in **Table Editor → profiles**, or via a small admin screen once one exists in the app.

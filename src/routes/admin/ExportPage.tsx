@@ -1,17 +1,22 @@
 import { useState } from 'react';
 import { useAdminTimeEntries, type EntryFilters } from '../../hooks/useAdminTimeEntries';
 import { useAdminTravelDays } from '../../hooks/useAdminTravelDays';
+import { useTeamPto } from '../../hooks/useTeamPto';
 import { useEmployees } from '../../hooks/useEmployees';
 import { hoursBetween, formatDateTime, formatDate } from '../../lib/time';
+import { getPayPeriodRange, toDateKey } from '../../lib/payroll';
 import { toCsv, downloadCsv } from '../../lib/csv';
+import { buildPayrollExportRows, downloadPayrollExportXlsx } from '../../lib/payrollExport';
 
 function defaultExportFilters(): EntryFilters {
-  const to = new Date();
-  const from = new Date();
-  from.setDate(from.getDate() - 14);
+  // Defaults to the current pay period (always whole Monday-Sunday weeks,
+  // per getPayPeriodRange) rather than a rolling "last 14 days" - the GRIN
+  // payroll export's overtime math is only exact when the exported range
+  // covers whole weeks, and a payroll run is naturally period-based anyway.
+  const { start, end } = getPayPeriodRange(new Date());
   return {
-    from: from.toLocaleDateString('en-CA'),
-    to: to.toLocaleDateString('en-CA'),
+    from: toDateKey(start),
+    to: toDateKey(end),
     employeeId: 'all',
   };
 }
@@ -20,11 +25,26 @@ export function ExportPage() {
   const [filters, setFilters] = useState<EntryFilters>(defaultExportFilters());
   const { entries, loading, error } = useAdminTimeEntries(filters);
   const { travelDays, loading: travelDaysLoading, error: travelDaysError } = useAdminTravelDays(filters);
+  const { requests: ptoRequests } = useTeamPto(filters.from, filters.to);
   const { employees } = useEmployees();
+  const [payrollExporting, setPayrollExporting] = useState(false);
 
   const closedEntries = entries.filter((e) => e.clock_out);
   const totalHours = closedEntries.reduce((sum, e) => sum + hoursBetween(e.clock_in, e.clock_out!), 0);
   const openCount = entries.length - closedEntries.length;
+  const visibleEmployees = filters.employeeId === 'all' ? employees : employees.filter((emp) => emp.id === filters.employeeId);
+  const missingPayrollId = visibleEmployees.filter((emp) => !emp.payroll_id).length;
+
+  async function handleExportPayroll() {
+    setPayrollExporting(true);
+    try {
+      const rows = buildPayrollExportRows(visibleEmployees, entries, ptoRequests, travelDays);
+      const filename = `ExcelTimeClock_GRIN_${toDateKey(new Date()).replace(/-/g, '')}.xlsx`;
+      await downloadPayrollExportXlsx(rows, filename);
+    } finally {
+      setPayrollExporting(false);
+    }
+  }
 
   function handleExportCsv() {
     const rows = closedEntries.map((e) => ({
@@ -79,6 +99,28 @@ export function ExportPage() {
         </div>
       </div>
 
+      <div className="section-head">
+        <span className="num">1</span>
+        <h2>Payroll Import (GRIN)</h2>
+      </div>
+      <p className="form-hint">
+        One row per employee for the selected range, matching GRIN's own ExcelTimeClock import format (EmployeeID,
+        hours split into regular/overtime, PTO, per diem). Bonus, Tech Support, and Holiday units aren't tracked here
+        and always export blank.
+        {missingPayrollId > 0 &&
+          ` ${missingPayrollId} employee${missingPayrollId === 1 ? '' : 's'} missing a Payroll ID (set it in Supabase Table Editor -> profiles -> payroll_id) - their EmployeeID cell will be blank.`}
+      </p>
+      <div className="export-actions no-print">
+        <button type="button" className="btn-build" onClick={() => void handleExportPayroll()} disabled={payrollExporting}>
+          {payrollExporting ? 'Exporting...' : 'Export Payroll (GRIN Format)'}
+        </button>
+      </div>
+
+      <div className="section-head">
+        <span className="num">2</span>
+        <h2>Hours</h2>
+      </div>
+
       {error && <p className="form-error">{error}</p>}
       {loading && <p>Loading...</p>}
 
@@ -88,7 +130,7 @@ export function ExportPage() {
       </p>
 
       <div className="export-actions no-print">
-        <button type="button" className="btn-build" onClick={handleExportCsv} disabled={closedEntries.length === 0}>
+        <button type="button" onClick={handleExportCsv} disabled={closedEntries.length === 0}>
           Export CSV
         </button>
         <button type="button" onClick={() => window.print()} disabled={closedEntries.length === 0}>
@@ -126,7 +168,7 @@ export function ExportPage() {
       </div>
 
       <div className="section-head">
-        <span className="num">2</span>
+        <span className="num">3</span>
         <h2>Travel Days (Per Diem)</h2>
       </div>
 
