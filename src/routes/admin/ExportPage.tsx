@@ -1,36 +1,10 @@
 import { useState } from 'react';
-import { useAdminTimeEntries, type EntryFilters, type AdminTimeEntryRow } from '../../hooks/useAdminTimeEntries';
+import { useAdminTimeEntries, type EntryFilters } from '../../hooks/useAdminTimeEntries';
 import { useAdminTravelDays } from '../../hooks/useAdminTravelDays';
 import { useTeamPto } from '../../hooks/useTeamPto';
 import { useEmployees } from '../../hooks/useEmployees';
-import { hoursBetween, formatDate } from '../../lib/time';
 import { getPayPeriodRange, toDateKey } from '../../lib/payroll';
-import { toCsv, downloadCsv } from '../../lib/csv';
-import { buildPayrollExportRows, downloadPayrollExportXlsx } from '../../lib/payrollExport';
-import type { Database } from '../../lib/database.types';
-
-type Profile = Database['public']['Tables']['profiles']['Row'];
-
-interface EmployeeHoursTotal {
-  employeeId: string;
-  fullName: string;
-  totalHours: number;
-}
-
-/** One row per employee (every employee passed in, even ones with zero
- *  closed hours in range) - matches the "always list the full roster"
- *  pattern used by the GRIN export and Timesheets Browser. */
-function buildEmployeeHoursTotals(employees: Profile[], closedEntries: AdminTimeEntryRow[]): EmployeeHoursTotal[] {
-  const totalsByEmployee = new Map<string, number>();
-  for (const e of closedEntries) {
-    totalsByEmployee.set(e.employee_id, (totalsByEmployee.get(e.employee_id) ?? 0) + hoursBetween(e.clock_in, e.clock_out!));
-  }
-  return employees.map((emp) => ({
-    employeeId: emp.id,
-    fullName: emp.full_name,
-    totalHours: totalsByEmployee.get(emp.id) ?? 0,
-  }));
-}
+import { buildPayrollExportRows, downloadPayrollExportXlsx, PAYROLL_EXPORT_HEADERS } from '../../lib/payrollExport';
 
 function defaultExportFilters(): EntryFilters {
   // Defaults to the current pay period (always whole Monday-Sunday weeks,
@@ -53,42 +27,21 @@ export function ExportPage() {
   const { employees } = useEmployees();
   const [payrollExporting, setPayrollExporting] = useState(false);
 
-  const closedEntries = entries.filter((e) => e.clock_out);
-  const totalHours = closedEntries.reduce((sum, e) => sum + hoursBetween(e.clock_in, e.clock_out!), 0);
-  const openCount = entries.length - closedEntries.length;
   const visibleEmployees = filters.employeeId === 'all' ? employees : employees.filter((emp) => emp.id === filters.employeeId);
   const missingPayrollId = visibleEmployees.filter((emp) => !emp.payroll_id).length;
-  const employeeHoursTotals = buildEmployeeHoursTotals(visibleEmployees, closedEntries);
+  // Same row-building function the actual .xlsx export uses, so the preview
+  // table on screen is exactly what downloading produces - not a separate
+  // approximation that could drift out of sync with it.
+  const previewRows = buildPayrollExportRows(visibleEmployees, entries, ptoRequests, travelDays);
 
   async function handleExportPayroll() {
     setPayrollExporting(true);
     try {
-      const rows = buildPayrollExportRows(visibleEmployees, entries, ptoRequests, travelDays);
       const filename = `ExcelTimeClock_GRIN_${toDateKey(new Date()).replace(/-/g, '')}.xlsx`;
-      await downloadPayrollExportXlsx(rows, filename);
+      await downloadPayrollExportXlsx(previewRows, filename);
     } finally {
       setPayrollExporting(false);
     }
-  }
-
-  function handleExportCsv() {
-    const rows = employeeHoursTotals.map((t) => ({
-      employee: t.fullName,
-      hours: t.totalHours.toFixed(2),
-    }));
-    const csv = toCsv(rows);
-    downloadCsv(`timesheet_${filters.from}_to_${filters.to}.csv`, csv);
-  }
-
-  function handleExportTravelDaysCsv() {
-    const rows = travelDays.map((t) => ({
-      employee: t.profiles?.full_name ?? 'Unknown',
-      date: formatDate(t.travel_date),
-      notes: t.notes ?? '',
-      logged_by: t.source === 'self' ? 'Employee' : 'Admin',
-    }));
-    const csv = toCsv(rows);
-    downloadCsv(`travel_days_${filters.from}_to_${filters.to}.csv`, csv);
   }
 
   return (
@@ -96,7 +49,7 @@ export function ExportPage() {
       <h1>
         Export <span>Timesheets</span>
       </h1>
-      <p className="sub">Download hours for payroll, or print a paper copy.</p>
+      <p className="sub">Download the payroll import file for GRIN.</p>
 
       <div className="filter-row no-print">
         <div className="fcol">
@@ -137,91 +90,32 @@ export function ExportPage() {
         </button>
       </div>
 
-      <div className="section-head">
-        <span className="num">2</span>
-        <h2>Hours</h2>
-      </div>
-
       {error && <p className="form-error">{error}</p>}
-      {loading && <p>Loading...</p>}
+      {travelDaysError && <p className="form-error">{travelDaysError}</p>}
+      {(loading || travelDaysLoading) && <p>Loading...</p>}
 
-      <p className="form-hint">
-        {closedEntries.length} entries, {totalHours.toFixed(2)} hours total
-        {openCount > 0 && `, ${openCount} still clocked in (excluded)`}
-      </p>
-
-      <div className="export-actions no-print">
-        <button type="button" onClick={handleExportCsv} disabled={closedEntries.length === 0}>
-          Export CSV
-        </button>
-        <button type="button" onClick={() => window.print()} disabled={closedEntries.length === 0}>
-          Export PDF (Print)
-        </button>
-      </div>
+      <p className="form-hint">Preview - exactly what the download above will contain.</p>
 
       <div className="tablewrap">
         <table>
           <thead>
             <tr>
-              <th>Employee</th>
-              <th>Total Hours</th>
+              {PAYROLL_EXPORT_HEADERS.map((h) => (
+                <th key={h}>{h}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {employeeHoursTotals.map((t) => (
-              <tr key={t.employeeId} className="row">
-                <td>{t.fullName}</td>
-                <td className="num">{t.totalHours.toFixed(2)}</td>
+            {previewRows.map((row, i) => (
+              <tr key={i} className="row">
+                {PAYROLL_EXPORT_HEADERS.map((h) => (
+                  <td key={h}>{row[h]}</td>
+                ))}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
-      <div className="section-head">
-        <span className="num">3</span>
-        <h2>Travel Days (Per Diem)</h2>
-      </div>
-
-      {travelDaysError && <p className="form-error">{travelDaysError}</p>}
-      {travelDaysLoading && <p>Loading...</p>}
-      {!travelDaysLoading && travelDays.length === 0 && <p className="form-hint">No travel days logged in this range.</p>}
-
-      {travelDays.length > 0 && (
-        <>
-          <div className="export-actions no-print">
-            <button type="button" onClick={handleExportTravelDaysCsv}>
-              Export Travel Days CSV
-            </button>
-          </div>
-          <div className="tablewrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Employee</th>
-                  <th>Date</th>
-                  <th>Notes</th>
-                  <th>Logged By</th>
-                </tr>
-              </thead>
-              <tbody>
-                {travelDays.map((t) => (
-                  <tr key={t.id} className="row">
-                    <td>{t.profiles?.full_name ?? 'Unknown'}</td>
-                    <td>{formatDate(t.travel_date)}</td>
-                    <td>{t.notes}</td>
-                    <td>
-                      <span className={`tag ${t.source === 'self' ? 'muted' : 'ok'}`}>
-                        {t.source === 'self' ? 'Employee' : 'Admin'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
     </div>
   );
 }

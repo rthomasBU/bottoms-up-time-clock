@@ -89,6 +89,15 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [x] Verified live: 10 employees listed, Ryan Thomas 10.40 + Chris Wiles 0.08 = 10.48, matching the summary hint above the table exactly. Confirmed the CSV export's actual content (intercepted the Blob passed to `URL.createObjectURL` and read its text directly, since the download helper revokes the blob URL synchronously right after the click - a plain post-click fetch was too late) - `employee,hours` header, same 10 rows, same values as the table.
 - [x] No console errors on a fresh tab, no horizontal scroll at mobile width (375px).
 
+## Export page simplified to payroll preview only ✅ verified live
+
+- [x] Removed the "Hours" (section 2) and "Travel Days" (section 3) sections from `/admin/export` entirely, along with their CSV export buttons and the "Export PDF (Print)" button - the page is now just the filter row plus the single "Payroll Import (GRIN)" section (unnumbered now that it's the only section).
+- [x] Added a live preview table under the export button showing exactly what the `.xlsx` download will contain - same 15 GRIN columns, one row per visible employee - built by calling `buildPayrollExportRows` directly (the same function `downloadPayrollExportXlsx` uses), so the preview can never drift out of sync with the real export; changing the date range or Employee filter updates the preview immediately, no separate "generate preview" step.
+- [x] Verified live: preview table matches the values already independently confirmed for the GRIN `.xlsx` export (Ryan Thomas `Pay/Hourly/Units: 10.40`, `Pay/PTO/Units: 8.00`; salaried employees show `Pay/Salary/Units: 1`; all 10 employees listed).
+- [x] Wide 15-column table scrolls horizontally inside its own `.tablewrap` container at both desktop and mobile (375px) width - confirmed no page-level horizontal scroll either width.
+- [x] No console errors on a fresh tab (a second, pre-existing tab's console history had stale Vite HMR errors referencing removed code from earlier in the session - confirmed those don't reproduce on a fresh navigation, per the established stale-HMR pattern).
+- [x] `npm run typecheck` / `npm run lint` / `npm run build` all clean.
+
 ## Payroll export matching GRIN's ExcelTimeClock format (0012_payroll_id.sql) ✅ verified live
 
 - [x] `npm run typecheck` / `npm run lint` / `npm run build` all clean. `npm audit` clean (0 vulnerabilities) after installing `xlsx` from SheetJS's own CDN tarball instead of the vulnerable npm-registry release.

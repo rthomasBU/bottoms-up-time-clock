@@ -25,7 +25,7 @@ import type { TeamPtoRow } from '../hooks/useTeamPto';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
-const HEADERS = [
+export const PAYROLL_EXPORT_HEADERS = [
   'EmployeeID',
   'FirstName',
   'LastName',
@@ -43,7 +43,7 @@ const HEADERS = [
   'Pay/Per Diem/Units',
 ] as const;
 
-export type PayrollExportRow = Record<(typeof HEADERS)[number], string | number>;
+export type PayrollExportRow = Record<(typeof PAYROLL_EXPORT_HEADERS)[number], string | number>;
 
 function splitName(fullName: string): { firstName: string; lastName: string } {
   const parts = fullName.trim().split(/\s+/);
@@ -139,7 +139,10 @@ export function buildPayrollExportRows(
  *  the main bundle for everyone who isn't an admin exporting payroll. */
 export async function downloadPayrollExportXlsx(rows: PayrollExportRow[], filename: string) {
   const XLSX = await import('xlsx');
-  const aoa = [HEADERS as unknown as string[], ...rows.map((row) => HEADERS.map((h) => row[h]))];
+  const aoa = [
+    PAYROLL_EXPORT_HEADERS as unknown as string[],
+    ...rows.map((row) => PAYROLL_EXPORT_HEADERS.map((h) => row[h])),
+  ];
   const worksheet = XLSX.utils.aoa_to_sheet(aoa);
   const workbook = XLSX.utils.book_new();
   const sheetName = filename.replace(/\.xlsx$/i, '').slice(0, 31);
