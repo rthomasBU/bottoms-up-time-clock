@@ -4,6 +4,7 @@ import { useAdminTimeEntries, defaultFilters, type AdminTimeEntryRow } from '../
 import { useEmployees } from '../../hooks/useEmployees';
 import { hoursBetween, formatTime } from '../../lib/time';
 import { mapLinkUrl } from '../../lib/geolocation';
+import { getPayPeriodRange, toDateKey } from '../../lib/payroll';
 import { groupByDay, groupByPayPeriod } from '../../lib/timesheetGrouping';
 import type { Database } from '../../lib/database.types';
 
@@ -12,7 +13,6 @@ type Profile = Database['public']['Tables']['profiles']['Row'];
 interface EmployeeGroup {
   employeeId: string;
   fullName: string;
-  totalHours: number;
   entries: AdminTimeEntryRow[];
 }
 
@@ -27,14 +27,23 @@ function buildEmployeeGroups(employees: Profile[], entries: AdminTimeEntryRow[])
     if (list) list.push(entry);
     else entriesByEmployee.set(entry.employee_id, [entry]);
   }
-  return employees.map((emp) => {
-    const empEntries = entriesByEmployee.get(emp.id) ?? [];
-    const totalHours = empEntries.reduce(
-      (sum, e) => (e.clock_out ? sum + hoursBetween(e.clock_in, e.clock_out) : sum),
-      0,
-    );
-    return { employeeId: emp.id, fullName: emp.full_name, totalHours, entries: empEntries };
-  });
+  return employees.map((emp) => ({
+    employeeId: emp.id,
+    fullName: emp.full_name,
+    entries: entriesByEmployee.get(emp.id) ?? [],
+  }));
+}
+
+/** Closed-entry hours per employee, e.g. for the current-pay-period total
+ *  shown on each employee's row (independent of the From/To range below -
+ *  see the separate currentPeriodEntries fetch in the component). */
+function hoursByEmployee(entries: AdminTimeEntryRow[]): Map<string, number> {
+  const totals = new Map<string, number>();
+  for (const entry of entries) {
+    if (!entry.clock_out) continue;
+    totals.set(entry.employee_id, (totals.get(entry.employee_id) ?? 0) + hoursBetween(entry.clock_in, entry.clock_out));
+  }
+  return totals;
 }
 
 export function TimesheetsPage() {
@@ -42,6 +51,19 @@ export function TimesheetsPage() {
   const { entries, loading, error } = useAdminTimeEntries(filters);
   const { employees } = useEmployees();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [expandedPeriods, setExpandedPeriods] = useState<Set<string>>(new Set());
+
+  // The row-level total is always "hours this pay period", regardless of
+  // whatever From/To range is selected below for browsing/correcting - so
+  // it needs its own fetch pinned to the current period, not derived from
+  // `entries`.
+  const currentPeriod = useMemo(() => getPayPeriodRange(new Date()), []);
+  const currentPeriodFilters = useMemo(
+    () => ({ from: toDateKey(currentPeriod.start), to: toDateKey(currentPeriod.end), employeeId: 'all' as const }),
+    [currentPeriod],
+  );
+  const { entries: currentPeriodEntries } = useAdminTimeEntries(currentPeriodFilters);
+  const currentPeriodTotals = useMemo(() => hoursByEmployee(currentPeriodEntries), [currentPeriodEntries]);
 
   const groups = useMemo(() => buildEmployeeGroups(employees, entries), [employees, entries]);
 
@@ -58,6 +80,23 @@ export function TimesheetsPage() {
       const next = new Set(prev);
       if (next.has(employeeId)) next.delete(employeeId);
       else next.add(employeeId);
+      return next;
+    });
+  }
+
+  // Periods are keyed by employeeId+periodKey (not periodKey alone) so
+  // expanding one employee's "Aug 24 - Sep 6" period doesn't also expand
+  // another employee's row for the same calendar period.
+  function isPeriodExpanded(employeeId: string, periodKey: string) {
+    return expandedPeriods.has(`${employeeId}|${periodKey}`);
+  }
+
+  function togglePeriod(employeeId: string, periodKey: string) {
+    const key = `${employeeId}|${periodKey}`;
+    setExpandedPeriods((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   }
@@ -101,6 +140,7 @@ export function TimesheetsPage() {
 
       {groups.map((group, i) => {
         const expanded = isExpanded(group.employeeId);
+        const periodTotal = currentPeriodTotals.get(group.employeeId) ?? 0;
         return (
         <div key={group.employeeId}>
           <div className="section-head">
@@ -112,8 +152,8 @@ export function TimesheetsPage() {
             >
               <span className="num">{i + 1}</span>
               <h2>{group.fullName}</h2>
-              <span className={`tag ${group.totalHours > 0 ? 'ok' : 'muted'}`} style={{ marginLeft: 'auto' }}>
-                {group.totalHours.toFixed(2)} hrs
+              <span className={`tag ${periodTotal > 0 ? 'ok' : 'muted'}`} style={{ marginLeft: 'auto' }}>
+                {periodTotal.toFixed(2)} hrs this period
               </span>
               <span className="chevron" aria-hidden="true">
                 {expanded ? '▾' : '▸'}
@@ -123,14 +163,28 @@ export function TimesheetsPage() {
 
           {expanded && group.entries.length === 0 && <p className="form-hint">No entries in this range.</p>}
 
-          {expanded && groupByPayPeriod(group.entries).map((period) => (
+          {expanded && groupByPayPeriod(group.entries).map((period) => {
+            const periodExpanded = isPeriodExpanded(group.employeeId, period.periodKey);
+            return (
             <div key={period.periodKey}>
               <div className="period-head">
-                <span className="period-label">Pay Period: {period.label}</span>
-                <span className="tag muted">{period.totalHours.toFixed(2)} hrs</span>
+                <button
+                  type="button"
+                  className="period-head-toggle"
+                  onClick={() => togglePeriod(group.employeeId, period.periodKey)}
+                  aria-expanded={periodExpanded}
+                >
+                  <span className="period-label">Pay Period: {period.label}</span>
+                  <span className="tag muted" style={{ marginLeft: 'auto' }}>
+                    {period.totalHours.toFixed(2)} hrs
+                  </span>
+                  <span className="chevron" aria-hidden="true">
+                    {periodExpanded ? '▾' : '▸'}
+                  </span>
+                </button>
               </div>
 
-              {groupByDay(period.entries).map((day) => (
+              {periodExpanded && groupByDay(period.entries).map((day) => (
                 <div key={day.dateKey}>
                   <div className="day-head">
                     <span className="day-label">{day.label}</span>
@@ -206,7 +260,8 @@ export function TimesheetsPage() {
                 </div>
               ))}
             </div>
-          ))}
+            );
+          })}
         </div>
         );
       })}

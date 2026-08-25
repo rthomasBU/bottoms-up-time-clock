@@ -93,6 +93,14 @@ Create at least these accounts via the Supabase Dashboard (Authentication → Us
 - [ ] **RLS check (not yet run)**: as a non-admin, `update time_entries set clock_in = clock_in - interval '1 hour' where id = <your own open entry>` must be rejected by the `time_entries_prevent_self_backdating` trigger.
 - [ ] **RLS check (not yet run)**: as a non-admin, clocking out via `update ... set clock_out = now(), edit_reason = 'test' where id = <your own open entry>` must be rejected (edit_reason no longer allowed on the self clock-out path).
 
+## Admin Timesheets: row total = current pay period, pay periods expandable ✅ verified
+
+- [x] Each employee row's total tag now always shows their **current pay period** hours ("X.XX hrs this period"), independent of whatever From/To range is selected below - backed by a second `useAdminTimeEntries` call pinned to `getPayPeriodRange(new Date())` rather than derived from the filtered `entries`. Verified live: Ryan Thomas's row correctly showed 10.40 (the current period only), not the old 22.90 grand total across both periods in the default 14-day filter range.
+- [x] Each pay period within an expanded employee is now itself a click-to-expand toggle (`.period-head-toggle`, same reset-button-inside-a-plain-div pattern as `.section-head-toggle`) - starts collapsed, showing just the period label + subtotal until clicked, then reveals its day/table breakdown. Keyed by `employeeId|periodKey` so expanding one employee's period doesn't affect another employee's same calendar period.
+- [x] Verified live: expanding Ryan Thomas showed both pay periods collapsed; expanding just "Aug 24 - Sep 6" revealed its days/entries while "Aug 10 - Aug 23" stayed collapsed independently.
+- [x] Fixed a real (if minor) overflow bug found while testing with the newer employee accounts that still have an email address as their `full_name` (no display name set yet): long unbroken names now truncate with an ellipsis (`.section-head h2` gets `min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap`) instead of overflowing past the tag/chevron; `.tag`, `.chevron`, and `.section-head .num` all got `flex-shrink:0` so they stay fixed-size while the name is what shrinks. Verified at both mobile (375px, truncates) and desktop (fits, no unnecessary truncation) widths, and confirmed this doesn't regress any other `.tag` usage elsewhere in the app.
+- [x] No console errors on a fresh tab.
+
 ## Admin Timesheets: removed the Employee filter dropdown ✅ verified
 
 - [x] `/admin/timesheets` no longer has an "Employee" filter dropdown (still lists every employee, per the previous change) - expanding one row is now the only way to drill into a specific person's hours, so there's no longer two different ways to narrow the view. Date range (From/To) filters remain.

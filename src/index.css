@@ -213,6 +213,7 @@ h2 {
   margin: 26px 0 14px;
 }
 .section-head .num {
+  flex-shrink: 0;
   font-family: var(--heading);
   font-weight: 700;
   font-size: 13px;
@@ -223,6 +224,10 @@ h2 {
 }
 .section-head h2 {
   margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 /* A .section-head that's also a click-to-expand toggle (Timesheets
    Browser's per-employee rows). The button lives *inside* the .section-head
@@ -249,6 +254,7 @@ h2 {
   cursor: default;
 }
 .chevron {
+  flex-shrink: 0;
   font-family: var(--heading);
   font-size: 14px;
   color: var(--gray);
@@ -262,13 +268,28 @@ h2 {
    (thin --line border instead of a 3px orange one, no numbered badge) so
    the employee-level grouping stays the visual anchor. */
 .period-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
   border-bottom: 1px solid var(--line);
   padding-bottom: 6px;
   margin: 22px 0 10px;
+}
+/* Same reset-button-inside-a-plain-div approach as .section-head-toggle,
+   for the same reason (avoid colliding with the bare `button` selector). */
+.period-head-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+.period-head-toggle:hover .chevron {
+  color: var(--orange);
 }
 .period-head .period-label {
   font-family: var(--heading);
@@ -563,6 +584,7 @@ tr.done td {
 /* Status tags */
 .tag {
   display: inline-block;
+  flex-shrink: 0;
   font-family: var(--heading);
   text-transform: uppercase;
   letter-spacing: 1px;
