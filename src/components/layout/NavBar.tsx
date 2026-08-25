@@ -22,6 +22,9 @@ export function NavBar() {
       <NavLink to="/travel" className={linkClass}>
         Travel
       </NavLink>
+      <NavLink to="/tech-support" className={linkClass}>
+        Tech Support
+      </NavLink>
       <NavLink to="/pto" className={linkClass}>
         PTO
       </NavLink>

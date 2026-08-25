@@ -7,8 +7,8 @@
 // admins use.
 //
 // What we don't track and always leave blank: Job, Pay/Bonus/Units,
-// Pay/Tech Support/Units, Pay/Holiday/Units - nothing in this app produces
-// that data. Pay/PTO/Units combines both 'pto' and 'sick' request types,
+// Pay/Holiday/Units - nothing in this app produces that data. Pay/PTO/Units
+// combines both 'pto' and 'sick' request types,
 // since the template has no separate sick column. Overtime is computed per
 // Monday-Sunday workweek (hours over 40 in a week -> Overtime, the rest ->
 // Hourly) only from entries actually included in the exported date range -
@@ -21,6 +21,7 @@ import { toDateKey } from './payroll';
 import type { Database } from './database.types';
 import type { AdminTimeEntryRow } from '../hooks/useAdminTimeEntries';
 import type { AdminTravelDayRow } from '../hooks/useAdminTravelDays';
+import type { AdminTechSupportDayRow } from '../hooks/useAdminTechSupportDays';
 import type { TeamPtoRow } from '../hooks/useTeamPto';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -90,6 +91,7 @@ export function buildPayrollExportRows(
   timeEntries: AdminTimeEntryRow[],
   ptoRequests: TeamPtoRow[],
   travelDays: AdminTravelDayRow[],
+  techSupportDays: AdminTechSupportDayRow[],
 ): PayrollExportRow[] {
   const entriesByEmployee = new Map<string, AdminTimeEntryRow[]>();
   for (const e of timeEntries) {
@@ -108,12 +110,18 @@ export function buildPayrollExportRows(
     travelCountByEmployee.set(t.employee_id, (travelCountByEmployee.get(t.employee_id) ?? 0) + 1);
   }
 
+  const techSupportCountByEmployee = new Map<string, number>();
+  for (const t of techSupportDays) {
+    techSupportCountByEmployee.set(t.employee_id, (techSupportCountByEmployee.get(t.employee_id) ?? 0) + 1);
+  }
+
   return employees.map((emp): PayrollExportRow => {
     const { firstName, lastName } = splitName(emp.full_name);
     const isHourly = emp.pay_type === 'hourly';
     const { regular, overtime } = isHourly ? splitHourlyOvertime(entriesByEmployee.get(emp.id) ?? []) : { regular: 0, overtime: 0 };
     const ptoHours = ptoHoursByEmployee.get(emp.id) ?? 0;
     const travelCount = travelCountByEmployee.get(emp.id) ?? 0;
+    const techSupportCount = techSupportCountByEmployee.get(emp.id) ?? 0;
 
     return {
       EmployeeID: emp.payroll_id ?? '',
@@ -127,7 +135,7 @@ export function buildPayrollExportRows(
       'Pay/Overtime/Units': isHourly ? numOrBlank(overtime) : '',
       'Pay/Salary/Units': isHourly ? '' : '1',
       'Pay/Bonus/Units': '',
-      'Pay/Tech Support/Units': '',
+      'Pay/Tech Support/Units': techSupportCount > 0 ? String(techSupportCount) : '',
       'Pay/PTO/Units': numOrBlank(ptoHours),
       'Pay/Holiday/Units': '',
       'Pay/Per Diem/Units': travelCount > 0 ? String(travelCount) : '',

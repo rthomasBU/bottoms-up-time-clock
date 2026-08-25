@@ -837,7 +837,9 @@ progress {
   margin-top: 18px;
 }
 
-.travel-day-list {
+/* Shared by any "log a day, see a list of your logged days" feature -
+   travel per diem, tech support, and anything similar added later. */
+.logged-day-list {
   list-style: none;
   margin: 14px 0 0;
   padding: 0;
@@ -845,7 +847,7 @@ progress {
   flex-direction: column;
   gap: 4px;
 }
-.travel-day-list li {
+.logged-day-list li {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -854,15 +856,15 @@ progress {
   border-top: 1px solid var(--line);
   font-size: 13px;
 }
-.travel-day-list li > span:first-child {
+.logged-day-list li > span:first-child {
   font-family: var(--heading);
   font-weight: 600;
   white-space: nowrap;
 }
-.travel-day-list .row-detail {
+.logged-day-list .row-detail {
   flex: 1;
 }
-.travel-day-list .btn-clear {
+.logged-day-list .btn-clear {
   margin-left: auto;
 }
 

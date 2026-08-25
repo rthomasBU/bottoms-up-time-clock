@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useAdminTimeEntries, type EntryFilters } from '../../hooks/useAdminTimeEntries';
 import { useAdminTravelDays } from '../../hooks/useAdminTravelDays';
+import { useAdminTechSupportDays } from '../../hooks/useAdminTechSupportDays';
 import { useTeamPto } from '../../hooks/useTeamPto';
 import { useEmployees } from '../../hooks/useEmployees';
 import { getPayPeriodRangeByOffset, toDateKey } from '../../lib/payroll';
@@ -27,6 +28,11 @@ export function ExportPage() {
   }, [periodOffset, employeeId]);
   const { entries, loading, error } = useAdminTimeEntries(filters);
   const { travelDays, loading: travelDaysLoading, error: travelDaysError } = useAdminTravelDays(filters);
+  const {
+    techSupportDays,
+    loading: techSupportDaysLoading,
+    error: techSupportDaysError,
+  } = useAdminTechSupportDays(filters);
   const { requests: ptoRequests } = useTeamPto(filters.from, filters.to);
   const { employees } = useEmployees();
   const [payrollExporting, setPayrollExporting] = useState(false);
@@ -36,7 +42,7 @@ export function ExportPage() {
   // Same row-building function the actual .xlsx export uses, so the preview
   // table on screen is exactly what downloading produces - not a separate
   // approximation that could drift out of sync with it.
-  const previewRows = buildPayrollExportRows(visibleEmployees, entries, ptoRequests, travelDays);
+  const previewRows = buildPayrollExportRows(visibleEmployees, entries, ptoRequests, travelDays, techSupportDays);
 
   async function handleExportPayroll() {
     setPayrollExporting(true);
@@ -88,7 +94,7 @@ export function ExportPage() {
       </div>
       <p className="form-hint">
         One row per employee for the selected pay period, matching GRIN's own ExcelTimeClock import format (EmployeeID,
-        hours split into regular/overtime, PTO, per diem). Bonus, Tech Support, and Holiday units aren't tracked here
+        hours split into regular/overtime, PTO, tech support, per diem). Bonus and Holiday units aren't tracked here
         and always export blank.
         {missingPayrollId > 0 &&
           ` ${missingPayrollId} employee${missingPayrollId === 1 ? '' : 's'} missing a Payroll ID (set it in Supabase Table Editor -> profiles -> payroll_id) - their EmployeeID cell will be blank.`}
@@ -101,7 +107,8 @@ export function ExportPage() {
 
       {error && <p className="form-error">{error}</p>}
       {travelDaysError && <p className="form-error">{travelDaysError}</p>}
-      {(loading || travelDaysLoading) && <p>Loading...</p>}
+      {techSupportDaysError && <p className="form-error">{techSupportDaysError}</p>}
+      {(loading || travelDaysLoading || techSupportDaysLoading) && <p>Loading...</p>}
 
       <p className="form-hint">Preview - exactly what the download above will contain.</p>
 

@@ -1,19 +1,19 @@
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { useTravelDays } from '../hooks/useTravelDays';
+import { useTechSupportDays } from '../hooks/useTechSupportDays';
 import { formatDate } from '../lib/time';
 import { toDateKey } from '../lib/payroll';
 
 const BACKDATE_WINDOW_DAYS = 14;
 
-/** Per diem travel logging, rendered on its own /travel tab - available to
- *  every employee regardless of pay_type (travel per diem isn't an
- *  hourly-vs-salaried thing, unlike the overtime alert). Logs every date in
- *  a start-end range at once (each date still becomes its own row - see
- *  useTravelDays); admins see everyone's on the Export page. */
-export function TravelDayLogger() {
+/** Tech support day logging, rendered on its own /tech-support tab -
+ *  available to every employee regardless of pay_type. Same format as
+ *  TravelDayLogger: logs every date in a start-end range at once (each date
+ *  still becomes its own row - see useTechSupportDays); admins see
+ *  everyone's on the Export page. */
+export function TechSupportDayLogger() {
   const { profile } = useAuth();
-  const { travelDays, loading, error, logTravelDays, deleteTravelDay } = useTravelDays(profile?.id);
+  const { techSupportDays, loading, error, logTechSupportDays, deleteTechSupportDay } = useTechSupportDays(profile?.id);
 
   const today = new Date();
   const earliest = new Date();
@@ -40,13 +40,13 @@ export function TravelDayLogger() {
     setFormError(null);
     setSuccessMessage(null);
     try {
-      const { logged, skipped } = await logTravelDays(profile.id, startDate, endDate, notes);
+      const { logged, skipped } = await logTechSupportDays(profile.id, startDate, endDate, notes);
       setNotes('');
       if (logged === 0) {
         setFormError('Every date in that range was already logged.');
       } else {
         setSuccessMessage(
-          `Logged ${logged} travel day${logged === 1 ? '' : 's'}${skipped > 0 ? ` (${skipped} already logged, skipped)` : ''}.`,
+          `Logged ${logged} tech support day${logged === 1 ? '' : 's'}${skipped > 0 ? ` (${skipped} already logged, skipped)` : ''}.`,
         );
       }
     } catch (err) {
@@ -59,7 +59,7 @@ export function TravelDayLogger() {
     setDeletingId(id);
     setFormError(null);
     try {
-      await deleteTravelDay(id);
+      await deleteTechSupportDay(id);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Something went wrong.');
     }
@@ -67,11 +67,11 @@ export function TravelDayLogger() {
   }
 
   return (
-    <div className="card travel-day-logger">
+    <div className="card tech-support-day-logger">
       <form className="entry-form" onSubmit={(e) => void handleSubmit(e)}>
-        <label htmlFor="travel-start">Start date</label>
+        <label htmlFor="tech-support-start">Start date</label>
         <input
-          id="travel-start"
+          id="tech-support-start"
           type="date"
           required
           min={earliestKey}
@@ -80,9 +80,9 @@ export function TravelDayLogger() {
           onChange={(e) => setStartDate(e.target.value)}
         />
 
-        <label htmlFor="travel-end">End date</label>
+        <label htmlFor="tech-support-end">End date</label>
         <input
-          id="travel-end"
+          id="tech-support-end"
           type="date"
           required
           min={earliestKey}
@@ -91,11 +91,11 @@ export function TravelDayLogger() {
           onChange={(e) => setEndDate(e.target.value)}
         />
 
-        <label htmlFor="travel-notes">Notes (optional)</label>
+        <label htmlFor="tech-support-notes">Notes (optional)</label>
         <textarea
-          id="travel-notes"
+          id="tech-support-notes"
           rows={2}
-          placeholder="e.g. Drove to the Cincinnati install job"
+          placeholder="e.g. Remote setup call with the Cincinnati install job"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
         />
@@ -105,19 +105,19 @@ export function TravelDayLogger() {
 
         <div className="form-actions">
           <button type="submit" className="btn-build" disabled={saving}>
-            {saving ? 'Logging...' : 'Log Travel'}
+            {saving ? 'Logging...' : 'Log Tech Support'}
           </button>
         </div>
       </form>
 
       {error && <p className="form-error">{error}</p>}
-      {!loading && travelDays.length > 0 && (
+      {!loading && techSupportDays.length > 0 && (
         <ul className="logged-day-list">
-          {travelDays.map((day) => {
+          {techSupportDays.map((day) => {
             const canDelete = new Date(day.created_at) >= earliest;
             return (
               <li key={day.id}>
-                <span>{formatDate(day.travel_date)}</span>
+                <span>{formatDate(day.support_date)}</span>
                 {day.notes && <span className="row-detail">{day.notes}</span>}
                 {canDelete && (
                   <button

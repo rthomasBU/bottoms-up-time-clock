@@ -17,6 +17,7 @@ export type TimeEntrySource = 'self' | 'admin_manual';
 export type PtoType = 'pto' | 'sick';
 export type PtoStatus = 'pending' | 'approved' | 'denied';
 export type TravelDaySource = 'self' | 'admin';
+export type TechSupportDaySource = 'self' | 'admin';
 
 export interface Database {
   public: {
@@ -202,6 +203,36 @@ export interface Database {
         Relationships: [
           {
             foreignKeyName: 'travel_days_employee_id_fkey';
+            columns: ['employee_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      tech_support_days: {
+        Row: {
+          id: string;
+          employee_id: string;
+          support_date: string;
+          notes: string | null;
+          source: TechSupportDaySource;
+          logged_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          employee_id: string;
+          support_date: string;
+          notes?: string | null;
+          source?: TechSupportDaySource;
+          logged_by: string;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['tech_support_days']['Insert']>;
+        Relationships: [
+          {
+            foreignKeyName: 'tech_support_days_employee_id_fkey';
             columns: ['employee_id'];
             isOneToOne: false;
             referencedRelation: 'profiles';
